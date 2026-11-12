@@ -169,7 +169,16 @@ th,td{padding:6px}
 .dprog{margin-top:10px}
 .actions{margin-top:10px}
 .hint{margin:6px 0 0}
+/* Connexion, indicateur de synchronisation */
+body:not(.authed) main{display:none}
+.authbox{max-width:380px;margin:10vh auto 0}
+.authbox label{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;font-size:.9rem;color:var(--muted)}
+.authbox input{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+#syncChip{position:fixed;left:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:40;font-size:.75rem;padding:3px 10px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--muted);pointer-events:none}
+#syncChip.ok{color:var(--ok)}
+#syncChip.warn{color:var(--warn)}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 <main>
@@ -298,6 +307,17 @@ th,td{padding:6px}
     <div id="dashWidgets"></div>
   </div>
 
+  <section class="card" id="acct">
+    <div class="head"><h2>Compte et données</h2><span class="date" id="acctUser"></span></div>
+    <div class="actions" style="margin-top:0">
+      <button type="button" id="btnExport">Exporter mes données</button>
+      <button type="button" id="btnImport">Importer des données</button>
+      <input type="file" id="fileImport" accept=".json,application/json" hidden>
+      <button type="button" id="btnLogout">Se déconnecter</button>
+    </div>
+    <p class="hint" id="acctMsg" role="status"></p>
+  </section>
+
   <div id="tip" role="tooltip" hidden></div>
 
   <dialog id="wDialog">
@@ -311,9 +331,32 @@ th,td{padding:6px}
   </dialog>
 </main>
 
+<!-- Écrans de chargement / connexion (le planning reste masqué tant que la session n'est pas validée) -->
+<div id="loadingView" class="authbox card" role="status">Vérification de la session…</div>
+<section id="authView" class="authbox card" hidden>
+  <h1>Planning 39 h</h1>
+  <form id="authForm" novalidate>
+    <label>Adresse e-mail<input type="email" id="authEmail" autocomplete="username" inputmode="email"></label>
+    <label>Mot de passe<input type="password" id="authPass" autocomplete="current-password"></label>
+    <div class="actions" style="margin-top:0">
+      <button type="submit">Se connecter</button>
+      <button type="button" id="btnSignup">Créer mon compte</button>
+      <button type="button" id="btnReset">Mot de passe oublié</button>
+    </div>
+  </form>
+  <form id="recForm" hidden>
+    <label>Nouveau mot de passe<input type="password" id="recPass" autocomplete="new-password"></label>
+    <div class="actions" style="margin-top:0"><button type="submit">Enregistrer le mot de passe</button></div>
+  </form>
+  <p class="hint" id="authMsg" role="alert"></p>
+</section>
+<div id="syncChip" role="status">Vérification de la session…</div>
+<dialog id="cloudDialog"><h2 id="cdTitle"></h2><p id="cdText"></p><div class="actions" id="cdBtns"></div></dialog>
+
 <script>
-(function(){
-  var GOAL = 39 * 60, DAY = 39 * 60 / 5, KEY = 'planning39h.v2';
+/* Démarré par la couche Supabase une fois l'utilisateur authentifié */
+window.bootPlanning = function(){
+  var GOAL = 39 * 60, DAY = 39 * 60 / 5, KEY = window.CloudSync.keys.plan;   // cache local propre à l'utilisateur
   var DAYS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
   var $ = function(id){ return document.getElementById(id); };
 
@@ -710,7 +753,7 @@ th,td{padding:6px}
   document.addEventListener('visibilitychange', tick);
   renderDate();
   update();
-})();
+};
 </script>
 
 <script>
@@ -721,10 +764,10 @@ th,td{padding:6px}
      ({id, title, render(ctx) -> HTML}) ; ctx = {rows, groups, filters}.
    - Nouvelles données (missions, projets…) : Store.write('planning39h.<module>.v1', …).
    ========================================================================== */
-(function(){
+window.bootHistory = function(){
   'use strict';
   var P = window.Planning, $ = function(id){ return document.getElementById(id); };
-  var HKEY = 'planning39h.history.v1', SCHOOL = 35 * 60, COMPANY = 39 * 60;
+  var HKEY = window.CloudSync.keys.hist, SCHOOL = 35 * 60, COMPANY = 39 * 60;
   var pad = function(n){ return (n < 10 ? '0' : '') + n; };
   var fmt = P.fmt;
 
@@ -967,6 +1010,297 @@ th,td{padding:6px}
   window.PlanApp = {store: Store, registerWidget: function(w){ widgets.push(w); if(!$('tab-dash').hidden) renderDash(); }};
   sync();
   show(location.hash.slice(1));
+};
+</script>
+
+<script>
+/* ==========================================================================
+   CONFIGURATION (constantes faciles à modifier)
+   ========================================================================== */
+const ALLOW_SIGNUP_UI = true;   // false : masque « Créer mon compte » (les comptes existants se connectent toujours)
+const SUPABASE_URL = "https://gdevdnbgshkjyskuscnz.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_M-y34_JtymHy8BpOpTnBZA_6Y791iFO";   // clé publique uniquement
+const SITE_URL = "https://paul-altgr.github.io/dashboard/";   // retour des liens e-mail (confirmation, récupération)
+const TABLE = "weekly_plans";
+const SAVE_DEBOUNCE_MS = 1000, RETRY_MS = 15000, SCHEMA = 1;
+const LEGACY = {plan:'planning39h.v2', hist:'planning39h.history.v1'};   // clés localStorage d'origine
+
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+
+/* ---------- Cache localStorage (accès « bruts », sans déclencher la synchro) ---------- */
+const origSet = Storage.prototype.setItem, origGet = Storage.prototype.getItem, origDel = Storage.prototype.removeItem;
+const ls = {get:k => origGet.call(localStorage,k), set:(k,v) => origSet.call(localStorage,k,v), del:k => origDel.call(localStorage,k)};
+const readJSON = k => { try{ return JSON.parse(ls.get(k)); }catch(e){ return null; } };
+window.CloudSync = {keys:{plan:'', hist:''}};   // clés propres à l'utilisateur, lues par l'application
+let metaKey = '', sb = null, user = null, booted = false, starting = false, recovery = false, busy = false, timer = null, notice = '';
+let meta = {dirty:false, base:null, localAt:null};   // dirty : modifications locales non envoyées ; base : updated_at de la dernière synchro
+
+/* ---------- Indicateur de synchronisation ---------- */
+const STATES = {session:'Vérification de la session…', login:'Connexion nécessaire', loading:'Chargement du planning…',
+  saving:'Sauvegarde en cours…', ok:'Synchronisé', offline:'Hors ligne — sauvegardé sur cet appareil',
+  pending:'Modifications en attente de synchronisation', error:'Erreur de synchronisation'};
+function status(k){ const c = $('syncChip'); c.textContent = STATES[k]; c.className = k === 'ok' ? 'ok' : (['error','pending','offline'].includes(k) ? 'warn' : ''); }
+const msg = (id, t) => { $(id).textContent = t || ''; };
+function show(v){
+  $('loadingView').hidden = v !== 'loading'; $('authView').hidden = v !== 'login';
+  document.body.classList.toggle('authed', v === 'app');
+  if(v === 'login') status('login');
+}
+function frErr(e){
+  const m = String((e && e.message) || e);
+  if(/Invalid login/i.test(m)) return 'E-mail ou mot de passe incorrect.';
+  if(/not confirmed/i.test(m)) return 'Adresse e-mail non confirmée : cliquez sur le lien reçu par e-mail.';
+  if(/already registered/i.test(m)) return 'Un compte existe déjà avec cette adresse.';
+  if(/at least|weak/i.test(m)) return 'Mot de passe trop court ou trop faible (6 caractères minimum).';
+  if(/rate limit|too many/i.test(m)) return 'Trop de tentatives : patientez quelques minutes.';
+  if(/invalid.*email|valid email/i.test(m)) return 'Adresse e-mail invalide.';
+  if(/fetch|network/i.test(m)) return 'Connexion Internet indisponible.';
+  return 'Une erreur est survenue : ' + m;
+}
+const fd = iso => iso ? new Date(iso).toLocaleString('fr-FR') : 'inconnue';
+
+/* ---------- Boîte de dialogue générique : renvoie l'index du bouton (-1 si fermée) ---------- */
+function ask(title, text, labels){
+  return new Promise(res => {
+    const d = $('cloudDialog'), box = $('cdBtns'); let done = false;
+    $('cdTitle').textContent = title; $('cdText').textContent = text; box.innerHTML = '';
+    const fin = v => { if(done) return; done = true; d.close(); res(v); };
+    labels.forEach((l, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = l; b.onclick = () => fin(i); box.appendChild(b); });
+    d.oncancel = e => { e.preventDefault(); fin(-1); };
+    d.showModal();
+  });
+}
+
+/* ---------- Format des données, validation, exportation ---------- */
+const MOMENTS = ['matin','midi','soir'];
+function pack(plan, hist){ return {schema:SCHEMA, app:'planning39h', exportedAt:new Date().toISOString(), plan:plan, history:hist || {}}; }
+function snapshot(){ return pack(readJSON(window.CloudSync.keys.plan), readJSON(window.CloudSync.keys.hist)); }
+function valid(d){   // refuse toute structure incompatible ; les données ne sont jamais interprétées comme du HTML/JS
+  try{
+    if(!d || d.schema !== SCHEMA || d.app !== 'planning39h') return false;
+    const p = d.plan, h = d.history;
+    if(p !== null){
+      if(!p || typeof p !== 'object' || typeof p.week !== 'string' || !Number.isFinite(p.done) || !p.locks || typeof p.locks !== 'object') return false;
+      if(p.moment !== undefined && !MOMENTS.includes(p.moment)) return false;
+      if(p.mode !== undefined && !/^(auto|[0-4])$/.test(String(p.mode))) return false;
+    }
+    if(!h || typeof h !== 'object' || Array.isArray(h)) return false;
+    return Object.keys(h).every(k => /^\d{4}-\d{1,2}-\d{1,2}$/.test(k) && ['entreprise','ecole'].includes(h[k].type) && Number.isFinite(h[k].goal) && Number.isFinite(h[k].done));
+  }catch(e){ return false; }
+}
+function download(obj, prefix){
+  const n = new Date(), p = x => String(x).padStart(2,'0'), a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'}));
+  a.download = prefix + '-' + n.getFullYear() + p(n.getMonth()+1) + p(n.getDate()) + '-' + p(n.getHours()) + p(n.getMinutes()) + '.json';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function applyData(d){   // écrit dans le cache de l'utilisateur sans déclencher de synchro
+  const k = window.CloudSync.keys;
+  if(d.plan === null) ls.del(k.plan); else ls.set(k.plan, JSON.stringify(d.plan));
+  ls.set(k.hist, JSON.stringify(d.history || {}));
+}
+const saveMeta = () => ls.set(metaKey, JSON.stringify(meta));
+
+/* ---------- Sauvegarde dans Supabase (upsert, une ligne par utilisateur) ---------- */
+async function fetchRemote(){
+  const {data, error} = await sb.from(TABLE).select('data,updated_at').eq('user_id', user.id).maybeSingle();
+  if(error) throw error;
+  return data;   // null si aucune ligne
+}
+async function pushNow(force){
+  if(!user || busy) return;
+  clearTimeout(timer);
+  if(!navigator.onLine){ status('offline'); return; }
+  busy = true; status('saving');
+  const stamp = meta.localAt;
+  try{
+    if(!force){   // avant d'envoyer : la version en ligne a-t-elle changé depuis notre dernière synchro ?
+      const r = await fetchRemote();
+      if(r && Date.parse(r.updated_at) !== (meta.base ? Date.parse(meta.base) : null)){ busy = false; return conflict(r); }
+    }
+    const {data, error} = await sb.from(TABLE).upsert({user_id:user.id, data:snapshot(), updated_at:new Date().toISOString()}, {onConflict:'user_id'}).select('updated_at').single();
+    if(error) throw error;
+    meta.base = data.updated_at; if(meta.localAt === stamp) meta.dirty = false; saveMeta();   // succès confirmé par Supabase
+    status(meta.dirty ? 'pending' : 'ok');
+    if(meta.dirty) timer = setTimeout(() => pushNow(), SAVE_DEBOUNCE_MS);
+  }catch(e){
+    status(navigator.onLine ? 'error' : 'offline');
+    timer = setTimeout(() => pushNow(), RETRY_MS);   // nouvel essai automatique
+  }finally{ busy = false; }
+}
+function onLocalChange(){   // 1) cache local déjà écrit par l'application, 2) synchro différée
+  meta.dirty = true; meta.localAt = new Date().toISOString(); saveMeta();
+  status(navigator.onLine ? 'pending' : 'offline');
+  clearTimeout(timer); timer = setTimeout(() => pushNow(), SAVE_DEBOUNCE_MS);
+}
+Storage.prototype.setItem = function(k, v){
+  const prev = origGet.call(this, k);
+  origSet.call(this, k, v);
+  const K = window.CloudSync.keys;
+  if(booted && this === localStorage && prev !== v && (k === K.plan || k === K.hist)) onLocalChange();
+};
+
+/* ---------- Gestion des conflits ---------- */
+async function conflict(r){
+  status('pending');
+  const c = await ask('Conflit de synchronisation',
+    'Version de cet appareil : modifiée le ' + fd(meta.localAt) + '. Version en ligne : modifiée le ' + fd(r.updated_at) + '. Laquelle voulez-vous garder ?',
+    ['Conserver la version de cet appareil', 'Utiliser la version en ligne', 'Annuler et exporter une sauvegarde']);
+  if(c === 0) return pushNow(true);
+  if(c === 1){
+    if(!valid(r.data)){ status('error'); return; }
+    download(snapshot(), 'planning-sauvegarde-appareil');   // filet de sécurité avant remplacement
+    applyData(r.data); meta.base = r.updated_at; meta.dirty = false; saveMeta();
+    if(booted) location.reload(); else status('ok');
+    return;
+  }
+  download(snapshot(), 'planning-sauvegarde');
+}
+
+/* ---------- Chargement depuis Supabase et réconciliation ---------- */
+async function reconcile(){   // renvoie false si l'utilisateur annule
+  const r = await fetchRemote();
+  if(!r){ if(!booted) return firstTime(); if(meta.dirty) await pushNow(); return true; }
+  const rt = Date.parse(r.updated_at), bt = meta.base ? Date.parse(meta.base) : null;
+  if(bt === null && readJSON(window.CloudSync.keys.plan) && !meta.dirty){ meta.dirty = true; meta.localAt = new Date().toISOString(); }   // jamais écraser des données locales jamais synchronisées
+  if(!meta.dirty){
+    if(rt !== bt){
+      if(!valid(r.data)){ status('error'); return true; }
+      applyData(r.data); meta.base = r.updated_at; saveMeta();
+      if(booted){ location.reload(); return false; }
+    }
+    status('ok'); return true;
+  }
+  if(rt !== bt) await conflict(r); else await pushNow();
+  return true;
+}
+
+/* ---------- Migration des anciennes données localStorage ---------- */
+function candidate(){   // données locales : cache de l'utilisateur, sinon clés d'origine (jamais supprimées)
+  const K = window.CloudSync.keys;
+  for(const [pk, hk] of [[K.plan, K.hist], [LEGACY.plan, LEGACY.hist]]){
+    const plan = readJSON(pk), hist = readJSON(hk) || {};
+    if((plan || Object.keys(hist).length) && valid(pack(plan, hist))) return {plan:plan, hist:hist};
+  }
+  return null;
+}
+async function firstTime(){   // aucune ligne en ligne pour cet utilisateur
+  const cand = candidate(), K = window.CloudSync.keys;
+  if(!cand){ meta = {dirty:true, base:null, localAt:new Date().toISOString()}; saveMeta(); return true; }   // nouveau compte : création de la ligne après démarrage
+  const c = await ask('Données locales trouvées', 'Des données locales ont été trouvées sur cet appareil. Voulez-vous les envoyer vers votre compte en ligne ?',
+    ['Importer les données locales vers le cloud', 'Commencer avec un planning vide', 'Annuler']);
+  if(c === 0){
+    download(pack(cand.plan, cand.hist), 'planning-sauvegarde-locale');   // sauvegarde avant envoi
+    applyData({plan:cand.plan, history:cand.hist});
+    meta = {dirty:true, base:null, localAt:new Date().toISOString()}; saveMeta();
+    await pushNow(true);
+    notice = meta.dirty ? 'La sauvegarde en ligne a échoué : vos données locales sont conservées et seront renvoyées.' : 'Données locales importées vers votre compte.';
+    return true;
+  }
+  if(c === 1){
+    download(pack(cand.plan, cand.hist), 'planning-sauvegarde-locale');
+    ls.del(K.plan); ls.del(K.hist);   // uniquement le cache de ce compte ; les clés d'origine restent intactes
+    meta = {dirty:true, base:null, localAt:new Date().toISOString()}; saveMeta();
+    return true;
+  }
+  await sb.auth.signOut(); return false;
+}
+
+/* ---------- Session : démarrage de l'application ---------- */
+async function start(u){
+  if(starting || booted) return;
+  starting = true; user = u;
+  const K = window.CloudSync.keys;
+  K.plan = LEGACY.plan + '.u.' + u.id; K.hist = LEGACY.hist + '.u.' + u.id; metaKey = 'planning39h.sync.u.' + u.id;   // cache séparé par compte
+  meta = Object.assign({dirty:false, base:null, localAt:null}, readJSON(metaKey));
+  show('loading'); status('loading');
+  try{
+    if(!(await reconcile())){ starting = false; show('login'); return; }
+  }catch(e){   // hors ligne ou erreur réseau : on utilise le cache de ce compte
+    if(!(readJSON(K.plan) || readJSON(K.hist))){
+      starting = false; show('login'); status(navigator.onLine ? 'error' : 'offline');
+      msg('authMsg', 'Connexion Internet nécessaire pour charger votre planning la première fois sur cet appareil.'); return;
+    }
+    status(navigator.onLine ? 'error' : 'offline');
+  }
+  $('acctUser').textContent = u.email || '';
+  window.bootPlanning(); window.bootHistory();   // l'application démarre seulement ici
+  booted = true; starting = false; show('app');
+  if(notice) msg('acctMsg', notice);
+  if(meta.dirty) pushNow();
+}
+
+/* ---------- Authentification ---------- */
+function init(){
+  if(!ALLOW_SIGNUP_UI) $('btnSignup').hidden = true;
+  status('session');
+  if(!window.supabase){ show('login'); msg('authMsg', 'Impossible de charger Supabase (connexion Internet requise).'); status('error'); return; }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}});
+  const creds = () => ({email:$('authEmail').value.trim(), password:$('authPass').value});
+
+  sb.auth.onAuthStateChange((ev, session) => setTimeout(() => {   // setTimeout : pas d'appel Supabase dans le callback
+    if(ev === 'PASSWORD_RECOVERY'){ recovery = true; show('login'); $('authForm').hidden = true; $('recForm').hidden = false; return; }
+    if(session && !recovery) start(session.user);
+    else if(!session && booted) location.reload();   // déconnexion : tout est vidé de la mémoire
+    else if(!session){ show('login'); }
+  }, 0));
+
+  $('authForm').onsubmit = async e => {
+    e.preventDefault(); const c = creds();
+    if(!c.email || !c.password) return msg('authMsg', 'Saisissez votre adresse e-mail et votre mot de passe.');
+    msg('authMsg', 'Connexion…');
+    const {error} = await sb.auth.signInWithPassword(c);
+    msg('authMsg', error ? frErr(error) : ''); $('authPass').value = '';
+  };
+  $('btnSignup').onclick = async () => {
+    const c = creds(); if(!c.email || !c.password) return msg('authMsg', 'Saisissez une adresse e-mail et un mot de passe.');
+    const {data, error} = await sb.auth.signUp({email:c.email, password:c.password, options:{emailRedirectTo:SITE_URL}});
+    msg('authMsg', error ? frErr(error) : (data.session ? '' : 'Compte créé. Cliquez sur le lien de confirmation reçu par e-mail, puis connectez-vous.'));
+  };
+  $('btnReset').onclick = async () => {
+    const em = $('authEmail').value.trim(); if(!em) return msg('authMsg', 'Saisissez d’abord votre adresse e-mail.');
+    const {error} = await sb.auth.resetPasswordForEmail(em, {redirectTo:SITE_URL});
+    msg('authMsg', error ? frErr(error) : 'Si un compte existe pour cette adresse, un e-mail de récupération vient d’être envoyé.');
+  };
+  $('recForm').onsubmit = async e => {
+    e.preventDefault();
+    const {error} = await sb.auth.updateUser({password:$('recPass').value});
+    if(error) return msg('authMsg', frErr(error));
+    recovery = false; $('recForm').hidden = true; $('authForm').hidden = false; msg('authMsg', '');
+    const {data} = await sb.auth.getUser(); if(data && data.user) start(data.user);
+  };
+  $('btnLogout').onclick = async () => {   // ne supprime aucune donnée (ni locale, ni en ligne)
+    if(meta.dirty && !navigator.onLine && !confirm('Des modifications ne sont pas encore synchronisées. Elles restent sur cet appareil jusqu’à votre prochaine connexion. Se déconnecter ?')) return;
+    if(meta.dirty && navigator.onLine) await pushNow();
+    document.body.classList.remove('authed');
+    await sb.auth.signOut(); location.reload();
+  };
+
+  /* ---------- Exportation / importation JSON ---------- */
+  $('btnExport').onclick = () => { download(snapshot(), 'planning-export'); msg('acctMsg', 'Export téléchargé.'); };
+  $('btnImport').onclick = () => $('fileImport').click();
+  $('fileImport').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = ''; if(!f) return;
+    if(!/\.json$/i.test(f.name)) return msg('acctMsg', 'Fichier refusé : seul un fichier .json est accepté.');
+    let d; try{ d = JSON.parse(await f.text()); }catch(err){ return msg('acctMsg', 'Fichier refusé : JSON invalide.'); }
+    if(!valid(d)) return msg('acctMsg', 'Fichier refusé : ce n’est pas une sauvegarde de ce planning.');
+    if(await ask('Remplacer les données ?', 'Les données actuelles seront remplacées par le contenu du fichier. Une sauvegarde des données actuelles sera téléchargée avant.', ['Remplacer mes données', 'Annuler']) !== 0) return;
+    download(snapshot(), 'planning-sauvegarde-avant-import');
+    applyData(d); meta.dirty = true; meta.localAt = new Date().toISOString(); saveMeta();
+    await pushNow(true);
+    msg('acctMsg', meta.dirty ? 'Import enregistré sur cet appareil ; la synchronisation en ligne reprendra automatiquement.' : 'Import réussi et synchronisé.');
+    setTimeout(() => location.reload(), 1200);   // recharge l'application avec les données importées
+  };
+
+  /* ---------- Hors ligne / retour d'Internet / retour sur la page ---------- */
+  const check = () => { if(booted && user && navigator.onLine) reconcile().catch(() => status('error')); };
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) check(); });
+  window.addEventListener('online', check);
+  window.addEventListener('offline', () => { if(booted) status('offline'); });
+}
+init();
 })();
 </script>
 </body>
