@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="theme-color" content="#1f6f5c">
-<!-- PWA (futur) : <link rel="manifest" href="manifest.json"> + enregistrement d’un service worker. Tout le code est local : aucune ressource externe à mettre en cache. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Planning 39 h</title>
 <style>
@@ -99,7 +98,6 @@ tr.off .cap{color:var(--accent);font-weight:600}
 .tabs button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
 .depart{background:var(--accent);color:var(--card);border:0}
 .depart.warn{background:var(--warn)}
-.depart .hint{color:inherit;opacity:.9}
 .dep-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .dep-grid .lbl{display:block;font-size:.85rem;opacity:.9}
 .dep-grid strong{font-size:1.6rem;font-variant-numeric:tabular-nums}
@@ -177,6 +175,30 @@ body:not(.authed) main{display:none}
 #syncChip{position:fixed;left:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:40;font-size:.75rem;padding:3px 10px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--muted);pointer-events:none}
 #syncChip.ok{color:var(--ok)}
 #syncChip.warn{color:var(--warn)}
+/* Checklists */
+.ck-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.ck-card{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.ck-open{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-height:68px;border-radius:8px}
+.ck-open:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.ck-ico{font-size:1.6rem;line-height:1.2}
+.ck-title{font-weight:600;overflow-wrap:anywhere}
+.ck-count{color:var(--muted);font-size:.85rem}
+.ck-prog{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.ck-prog i{display:block;height:100%;background:var(--c)}
+.ck-btns{display:flex;gap:6px;flex-wrap:wrap}
+.ck-btns button{padding:6px 10px;font-size:.85rem}
+.ck-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
+.ck-item input[type=checkbox]{width:24px;height:24px;flex:none;accent-color:var(--c)}
+.ck-item input[type=text]{flex:1;min-width:0;font:inherit;color:var(--ink);background:transparent;border:1px solid transparent;border-radius:6px;padding:7px 6px}
+.ck-item input[type=text]:focus{border-color:var(--line);background:var(--bg)}
+.ck-item.done input[type=text]{text-decoration:line-through;color:var(--muted)}
+.ck-item button{padding:6px 10px}
+.ckl{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;font-size:.9rem;color:var(--muted)}
+.ckl input[type=text]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px}
+.ck-emoji,.ck-sw{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ck-emoji button{font-size:1.2rem;padding:4px 8px}
+.ck-sw button{width:30px;height:30px;padding:0;border-radius:50%;background:var(--c)}
+.ck-emoji button.on,.ck-sw button.on{outline:3px solid var(--accent);outline-offset:1px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
@@ -202,6 +224,7 @@ body:not(.authed) main{display:none}
     <button type="button" data-tab="semaine" class="on">Semaine</button>
     <button type="button" data-tab="histo">Historique</button>
     <button type="button" data-tab="dash">Dashboard</button>
+    <button type="button" data-tab="checklists">Checklists</button>
   </nav>
   <div id="tab-semaine" class="panel">
 
@@ -307,6 +330,15 @@ body:not(.authed) main{display:none}
     <div id="dashWidgets"></div>
   </div>
 
+  <!-- ONGLET CHECKLISTS -->
+  <div id="tab-checklists" class="panel" hidden>
+    <div id="ckGrid">
+      <div class="head"><h2>Mes checklists</h2><button type="button" id="ckNew">+ Nouvelle checklist</button></div>
+      <div class="ck-grid" id="ckCards"></div>
+    </div>
+    <div id="ckDetail" hidden></div>
+  </div>
+
   <section class="card" id="acct">
     <div class="head"><h2>Compte et données</h2><span class="date" id="acctUser"></span></div>
     <div class="actions" style="margin-top:0">
@@ -352,6 +384,16 @@ body:not(.authed) main{display:none}
 </section>
 <div id="syncChip" role="status">Vérification de la session…</div>
 <dialog id="cloudDialog"><h2 id="cdTitle"></h2><p id="cdText"></p><div class="actions" id="cdBtns"></div></dialog>
+<dialog id="ckDialog">
+  <h2 id="ckdTitle"></h2>
+  <form id="ckForm">
+    <label class="ckl">Nom<input type="text" id="ckdName" maxlength="60"></label>
+    <div class="ckl"><span>Icône</span><div class="ck-emoji" id="ckdEmojis"></div><input type="text" id="ckdEmoji" maxlength="8" aria-label="Autre emoji" placeholder="Autre emoji"></div>
+    <div class="ckl"><span>Couleur</span><div class="ck-sw" id="ckdColors"></div></div>
+    <p class="hint" id="ckdErr" style="color:var(--warn)" role="alert"></p>
+    <div class="actions"><button type="submit">Enregistrer</button><button type="button" id="ckdCancel">Annuler</button></div>
+  </form>
+</dialog>
 
 <script>
 /* Démarré par la couche Supabase une fois l'utilisateur authentifié */
@@ -759,10 +801,10 @@ window.bootPlanning = function(){
 <script>
 /* ==========================================================================
    Historique, Dashboard et onglets.
-   - Store : couche de stockage unique (à remplacer par IndexedDB / API plus tard).
+   - Store : lecture/écriture JSON dans le cache localStorage de l'utilisateur (la synchro Supabase est gérée dans le dernier script).
    - PlanApp.registerWidget(w) : ajoute un widget au Dashboard
      ({id, title, render(ctx) -> HTML}) ; ctx = {rows, groups, filters}.
-   - Nouvelles données (missions, projets…) : Store.write('planning39h.<module>.v1', …).
+   - Nouvelles données : ajouter une clé dans window.CloudSync.keys et l'inclure dans snapshot(), validChk()/valid() et applyData().
    ========================================================================== */
 window.bootHistory = function(){
   'use strict';
@@ -967,13 +1009,14 @@ window.bootHistory = function(){
   });
 
   /* ---- Onglets (routage par #hash simple) ---- */
-  var TABS = ['semaine','histo','dash'];
+  var TABS = ['semaine','histo','dash','checklists'];
   function show(t){
     if(TABS.indexOf(t) < 0) t = 'semaine';
     TABS.forEach(function(x){ $('tab-' + x).hidden = (x !== t); });
     Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function(b){ b.classList.toggle('on', b.dataset.tab === t); });
     if(t === 'histo') renderHisto();
     if(t === 'dash') renderDash();
+    if(t === 'checklists' && window.Checklists) window.Checklists.render();
   }
   Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function(b){
     b.addEventListener('click', function(){ location.hash = b.dataset.tab; show(b.dataset.tab); });
@@ -1015,15 +1058,185 @@ window.bootHistory = function(){
 
 <script>
 /* ==========================================================================
+   Onglet Checklists : cartes + détail. Données : {cards:[{id,title,icon,color,createdAt,updatedAt,order,
+   items:[{id,text,checked,createdAt,updatedAt,order}]}]} dans le cache localStorage de l'utilisateur
+   (clé window.CloudSync.keys.chk), synchronisées par la couche Supabase. Tous les textes sont insérés
+   via textContent / value : jamais d'innerHTML avec des données utilisateur.
+   ========================================================================== */
+window.bootChecklists = function(){
+  'use strict';
+  var KEY = window.CloudSync.keys.chk, $ = function(id){ return document.getElementById(id); };
+  var EMOJIS = ['🛒','🧹','🧺','🏠','📚','💼','✅','📝','🧳','🍽️','🛠️','❤️','🎯','📦','🐾'];
+  var COLORS = ['#1f6f5c','#2f6fdb','#8a4fd1','#d1457a','#d9822b','#c9a227','#3a9d5d','#5f6f6a'];
+  var HEX = /^#[0-9a-fA-F]{6}$/;
+  var data = {cards:[]}, cur = null;
+
+  function now(){ return new Date().toISOString(); }
+  function uid(){
+    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);   // secours
+  }
+  function el(tag, cls, txt){ var e = document.createElement(tag); if(cls) e.className = cls; if(txt !== undefined) e.textContent = txt; return e; }
+  function str(v, d){ return typeof v === 'string' ? v : d; }
+
+  /* Chargement tolérant : valeurs par défaut sûres pour toute propriété manquante */
+  function normItem(i, k){
+    return Object.assign({}, i, {id: str(i.id, '') || uid(), text: str(i.text, ''), checked: i.checked === true,
+      createdAt: str(i.createdAt, now()), updatedAt: str(i.updatedAt, now()), order: Number.isFinite(i.order) ? i.order : k});
+  }
+  function normCard(c, k){
+    return Object.assign({}, c, {id: str(c.id, '') || uid(), title: str(c.title, 'Sans titre'), icon: str(c.icon, '') || '✅',
+      color: HEX.test(c.color) ? c.color : COLORS[0], createdAt: str(c.createdAt, now()), updatedAt: str(c.updatedAt, now()),
+      order: Number.isFinite(c.order) ? c.order : k,
+      items: (Array.isArray(c.items) ? c.items : []).filter(function(i){ return i && typeof i === 'object'; }).map(normItem)});
+  }
+  try{
+    var raw = JSON.parse(localStorage.getItem(KEY));
+    if(raw && Array.isArray(raw.cards)) data.cards = raw.cards.filter(function(c){ return c && typeof c === 'object'; }).map(normCard);
+  }catch(e){}
+
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){} }   // écriture locale ; la synchro Supabase suit (debounce)
+  function byId(id){ return data.cards.filter(function(c){ return c.id === id; })[0]; }
+  function counts(c){ return {d: c.items.filter(function(i){ return i.checked; }).length, n: c.items.length}; }
+  function touch(c){ c.updatedAt = now(); }
+
+  function render(){
+    $('ckGrid').hidden = !!cur; $('ckDetail').hidden = !cur;
+    if(cur && byId(cur)) renderDetail(); else { cur = null; $('ckGrid').hidden = false; $('ckDetail').hidden = true; renderGrid(); }
+  }
+
+  /* ---- Grille de cartes ---- */
+  function renderGrid(){
+    var box = $('ckCards'); box.innerHTML = '';
+    if(!data.cards.length){ box.appendChild(el('p', 'hint', 'Aucune checklist. Crée la première avec « + Nouvelle checklist ».')); return; }
+    data.cards.slice().sort(function(a, b){ return a.order - b.order; }).forEach(function(c){
+      var k = counts(c), card = el('article', 'ck-card');
+      card.style.setProperty('--c', c.color);
+      var open = el('button', 'ck-open'); open.type = 'button'; open.setAttribute('aria-label', 'Ouvrir la checklist ' + c.title);
+      open.appendChild(el('span', 'ck-ico', c.icon)); open.appendChild(el('span', 'ck-title', c.title));
+      open.appendChild(el('span', 'ck-count', k.d + ' / ' + k.n));
+      open.onclick = function(){ cur = c.id; render(); window.scrollTo(0, 0); };
+      var prog = el('div', 'ck-prog'), bar = el('i'); bar.style.width = (k.n ? k.d / k.n * 100 : 0) + '%'; prog.appendChild(bar);
+      var btns = el('div', 'ck-btns');
+      var ed = el('button', '', 'Modifier'); ed.type = 'button'; ed.onclick = function(){ openDlg(c); };
+      var del = el('button', 'danger', 'Supprimer'); del.type = 'button'; del.onclick = function(){ delCard(c); };
+      btns.appendChild(ed); btns.appendChild(del);
+      card.appendChild(open); card.appendChild(prog); card.appendChild(btns); box.appendChild(card);
+    });
+  }
+  function delCard(c){
+    if(!confirm('Supprimer définitivement la checklist « ' + c.title + ' » et tous ses éléments ?')) return;
+    data.cards = data.cards.filter(function(x){ return x.id !== c.id; }); save(); render();
+  }
+
+  /* ---- Détail d'une checklist ---- */
+  function renderDetail(){
+    var c = byId(cur), box = $('ckDetail'); box.innerHTML = '';
+    var sec = el('section', 'card ck-card'); sec.style.setProperty('--c', c.color);
+    var top = el('div', 'head');
+    var back = el('button', '', '← Retour aux checklists'); back.type = 'button'; back.onclick = function(){ cur = null; render(); };
+    var title = el('h2', '', c.icon + ' ' + c.title);
+    var counter = el('span', 'date'); counter.setAttribute('aria-live', 'polite');
+    function upd(){ var k = counts(c); counter.textContent = k.d + ' / ' + k.n + ' terminées'; }
+    top.appendChild(back); top.appendChild(title); top.appendChild(counter);
+    var acts = el('div', 'actions'); acts.style.marginTop = '0';
+    var add = el('button', '', '+ Ajouter une ligne'); add.type = 'button'; add.onclick = function(){ addItem(c); };
+    var ed = el('button', '', 'Modifier'); ed.type = 'button'; ed.onclick = function(){ openDlg(c); };
+    acts.appendChild(add); acts.appendChild(ed);
+    var more = el('details'); more.appendChild(el('summary', '', 'Actions'));
+    var mb = el('div', 'actions');
+    [['Tout cocher', function(){ c.items.forEach(function(i){ i.checked = true; i.updatedAt = now(); }); }],
+     ['Tout décocher', function(){ c.items.forEach(function(i){ i.checked = false; i.updatedAt = now(); }); }],
+     ['Supprimer les éléments cochés', function(){
+        var n = counts(c).d; if(!n || !confirm('Supprimer les ' + n + ' élément(s) coché(s) ?')) return false;
+        c.items = c.items.filter(function(i){ return !i.checked; }); }]].forEach(function(a){
+      var b = el('button', a[0].indexOf('Supprimer') === 0 ? 'danger' : '', a[0]); b.type = 'button';
+      b.onclick = function(){ if(a[1]() === false) return; touch(c); save(); renderDetail(); };
+      mb.appendChild(b);
+    });
+    more.appendChild(mb);
+    var list = el('div'); list.id = 'ckList';
+    c.items.slice().sort(function(a, b){ return a.order - b.order; }).forEach(function(it){ list.appendChild(row(c, it, upd)); });
+    if(!c.items.length) list.appendChild(el('p', 'hint', 'Aucune ligne. Utilise « + Ajouter une ligne ».'));
+    sec.appendChild(top); sec.appendChild(acts); sec.appendChild(list); sec.appendChild(more); box.appendChild(sec);
+    upd();
+  }
+  function row(c, it, upd){
+    var r = el('div', 'ck-item' + (it.checked ? ' done' : ''));
+    var cb = el('input'); cb.type = 'checkbox'; cb.checked = it.checked; cb.setAttribute('aria-label', 'Terminé');
+    cb.onchange = function(){ it.checked = cb.checked; it.updatedAt = now(); touch(c); r.classList.toggle('done', cb.checked); upd(); save(); };
+    var tx = el('input'); tx.type = 'text'; tx.value = it.text; tx.maxLength = 300; tx.setAttribute('aria-label', 'Texte de la ligne');
+    tx.oninput = function(){ it.text = tx.value; it.updatedAt = now(); touch(c); save(); };
+    tx.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); addItem(c); } };
+    var del = el('button', 'danger', '🗑'); del.type = 'button'; del.setAttribute('aria-label', 'Supprimer la ligne');
+    del.onclick = function(){
+      if(it.text.trim() && !confirm('Supprimer cette ligne ?')) return;   // une ligne vide se supprime sans confirmation
+      c.items = c.items.filter(function(x){ return x.id !== it.id; }); touch(c); save(); renderDetail();
+    };
+    r.appendChild(cb); r.appendChild(tx); r.appendChild(del);
+    return r;
+  }
+  function addItem(c){
+    var order = c.items.reduce(function(m, i){ return Math.max(m, i.order); }, -1) + 1;
+    c.items.push({id: uid(), text: '', checked: false, createdAt: now(), updatedAt: now(), order: order});
+    touch(c); save(); renderDetail();
+    var last = document.querySelector('#ckList .ck-item:last-child input[type=text]'); if(last) last.focus();
+  }
+
+  /* ---- Boîte de création / modification d'une carte ---- */
+  var dlg = $('ckDialog'), editing = null, sel = {icon: EMOJIS[0], color: COLORS[0]};
+  var pick = document.createElement('input'); pick.type = 'color'; pick.setAttribute('aria-label', 'Autre couleur');
+  function mark(){
+    Array.prototype.forEach.call($('ckdEmojis').children, function(b){ b.classList.toggle('on', b.textContent === sel.icon); });
+    Array.prototype.forEach.call($('ckdColors').querySelectorAll('button'), function(b, i){ b.classList.toggle('on', COLORS[i] === sel.color); });
+  }
+  EMOJIS.forEach(function(e){
+    var b = el('button', '', e); b.type = 'button'; b.setAttribute('aria-label', 'Icône ' + e);
+    b.onclick = function(){ sel.icon = e; $('ckdEmoji').value = ''; mark(); }; $('ckdEmojis').appendChild(b);
+  });
+  COLORS.forEach(function(col){
+    var b = el('button'); b.type = 'button'; b.style.setProperty('--c', col); b.setAttribute('aria-label', 'Couleur ' + col);
+    b.onclick = function(){ sel.color = col; pick.value = col; mark(); }; $('ckdColors').appendChild(b);
+  });
+  pick.oninput = function(){ sel.color = pick.value; mark(); }; $('ckdColors').appendChild(pick);
+  $('ckdEmoji').oninput = function(){ if(this.value.trim()) sel.icon = this.value.trim(); mark(); };
+  function openDlg(c){
+    editing = c || null;
+    $('ckdTitle').textContent = c ? 'Modifier la checklist' : 'Nouvelle checklist';
+    $('ckdName').value = c ? c.title : ''; sel.icon = c ? c.icon : EMOJIS[0]; sel.color = c ? c.color : COLORS[0];
+    $('ckdEmoji').value = EMOJIS.indexOf(sel.icon) < 0 ? sel.icon : ''; pick.value = sel.color; $('ckdErr').textContent = '';
+    mark(); dlg.showModal(); $('ckdName').focus();
+  }
+  $('ckForm').onsubmit = function(e){
+    e.preventDefault();
+    var name = $('ckdName').value.trim();
+    if(!name){ $('ckdErr').textContent = 'Donne un nom à la checklist.'; return; }
+    if(editing){ editing.title = name; editing.icon = sel.icon; editing.color = sel.color; touch(editing); }
+    else{
+      var order = data.cards.reduce(function(m, c){ return Math.max(m, c.order); }, -1) + 1;
+      data.cards.push({id: uid(), title: name, icon: sel.icon, color: sel.color, createdAt: now(), updatedAt: now(), order: order, items: []});
+    }
+    save(); dlg.close(); render();
+  };
+  $('ckdCancel').onclick = function(){ dlg.close(); };
+  $('ckNew').onclick = function(){ openDlg(null); };
+
+  window.Checklists = {render: render};
+  render();
+};
+</script>
+
+<script>
+/* ==========================================================================
    CONFIGURATION (constantes faciles à modifier)
    ========================================================================== */
-const ALLOW_SIGNUP_UI = false;   // false : masque « Créer mon compte » (les comptes existants se connectent toujours)
+const ALLOW_SIGNUP_UI = false;   // true : affiche « Créer mon compte » (inscriptions à autoriser aussi dans Supabase) ; false : masqué, les comptes existants se connectent toujours
 const SUPABASE_URL = "https://gdevdnbgshkjyskuscnz.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_M-y34_JtymHy8BpOpTnBZA_6Y791iFO";   // clé publique uniquement
 const SITE_URL = "https://paul-altgr.github.io/dashboard/";   // retour des liens e-mail (confirmation, récupération)
 const TABLE = "weekly_plans";
 const SAVE_DEBOUNCE_MS = 1000, RETRY_MS = 15000, SCHEMA = 1;
-const LEGACY = {plan:'planning39h.v2', hist:'planning39h.history.v1'};   // clés localStorage d'origine
+const LEGACY = {plan:'planning39h.v2', hist:'planning39h.history.v1', chk:'planning39h.checklists.v1'};   // clés localStorage d'origine
 
 (function(){
 'use strict';
@@ -1033,7 +1246,7 @@ const $ = id => document.getElementById(id);
 const origSet = Storage.prototype.setItem, origGet = Storage.prototype.getItem, origDel = Storage.prototype.removeItem;
 const ls = {get:k => origGet.call(localStorage,k), set:(k,v) => origSet.call(localStorage,k,v), del:k => origDel.call(localStorage,k)};
 const readJSON = k => { try{ return JSON.parse(ls.get(k)); }catch(e){ return null; } };
-window.CloudSync = {keys:{plan:'', hist:''}};   // clés propres à l'utilisateur, lues par l'application
+window.CloudSync = {keys:{plan:'', hist:'', chk:''}};   // clés propres à l'utilisateur, lues par l'application
 let metaKey = '', sb = null, user = null, booted = false, starting = false, recovery = false, busy = false, timer = null, notice = '';
 let meta = {dirty:false, base:null, localAt:null};   // dirty : modifications locales non envoyées ; base : updated_at de la dernière synchro
 
@@ -1075,8 +1288,19 @@ function ask(title, text, labels){
 
 /* ---------- Format des données, validation, exportation ---------- */
 const MOMENTS = ['matin','midi','soir'];
-function pack(plan, hist){ return {schema:SCHEMA, app:'planning39h', exportedAt:new Date().toISOString(), plan:plan, history:hist || {}}; }
-function snapshot(){ return pack(readJSON(window.CloudSync.keys.plan), readJSON(window.CloudSync.keys.hist)); }
+function pack(plan, hist, chk){ return {schema:SCHEMA, app:'planning39h', exportedAt:new Date().toISOString(), plan:plan, history:hist || {}, checklists:chk || {cards:[]}}; }
+function snapshot(){ const K = window.CloudSync.keys; return pack(readJSON(K.plan), readJSON(K.hist), readJSON(K.chk)); }
+function validChk(c){   // checklists optionnelles (anciens exports sans cette propriété) ; champs facultatifs vérifiés seulement s'ils existent
+  if(c === undefined) return true;
+  const ok = x => x && typeof x === 'object' && !Array.isArray(x);
+  const date = v => v === undefined || (typeof v === 'string' && !isNaN(Date.parse(v)));
+  const num = v => v === undefined || Number.isFinite(v);
+  if(!ok(c) || !Array.isArray(c.cards)) return false;
+  return c.cards.every(k => ok(k) && typeof k.id === 'string' && k.id && typeof k.title === 'string' &&
+    (k.icon === undefined || typeof k.icon === 'string') && (k.color === undefined || /^#[0-9a-fA-F]{6}$/.test(k.color)) &&
+    date(k.createdAt) && date(k.updatedAt) && num(k.order) && Array.isArray(k.items) &&
+    k.items.every(i => ok(i) && typeof i.id === 'string' && i.id && typeof i.text === 'string' && typeof i.checked === 'boolean' && date(i.createdAt) && date(i.updatedAt) && num(i.order)));
+}
 function valid(d){   // refuse toute structure incompatible ; les données ne sont jamais interprétées comme du HTML/JS
   try{
     if(!d || d.schema !== SCHEMA || d.app !== 'planning39h') return false;
@@ -1087,6 +1311,7 @@ function valid(d){   // refuse toute structure incompatible ; les données ne so
       if(p.mode !== undefined && !/^(auto|[0-4])$/.test(String(p.mode))) return false;
     }
     if(!h || typeof h !== 'object' || Array.isArray(h)) return false;
+    if(!validChk(d.checklists)) return false;
     return Object.keys(h).every(k => /^\d{4}-\d{1,2}-\d{1,2}$/.test(k) && ['entreprise','ecole'].includes(h[k].type) && Number.isFinite(h[k].goal) && Number.isFinite(h[k].done));
   }catch(e){ return false; }
 }
@@ -1100,6 +1325,7 @@ function applyData(d){   // écrit dans le cache de l'utilisateur sans déclench
   const k = window.CloudSync.keys;
   if(d.plan === null) ls.del(k.plan); else ls.set(k.plan, JSON.stringify(d.plan));
   ls.set(k.hist, JSON.stringify(d.history || {}));
+  if(d.checklists) ls.set(k.chk, JSON.stringify(d.checklists));   // absentes (ancien format) : on garde les checklists locales
 }
 const saveMeta = () => ls.set(metaKey, JSON.stringify(meta));
 
@@ -1139,7 +1365,7 @@ Storage.prototype.setItem = function(k, v){
   const prev = origGet.call(this, k);
   origSet.call(this, k, v);
   const K = window.CloudSync.keys;
-  if(booted && this === localStorage && prev !== v && (k === K.plan || k === K.hist)) onLocalChange();
+  if(booted && this === localStorage && prev !== v && (k === K.plan || k === K.hist || k === K.chk)) onLocalChange();
 };
 
 /* ---------- Gestion des conflits ---------- */
@@ -1180,9 +1406,9 @@ async function reconcile(){   // renvoie false si l'utilisateur annule
 /* ---------- Migration des anciennes données localStorage ---------- */
 function candidate(){   // données locales : cache de l'utilisateur, sinon clés d'origine (jamais supprimées)
   const K = window.CloudSync.keys;
-  for(const [pk, hk] of [[K.plan, K.hist], [LEGACY.plan, LEGACY.hist]]){
-    const plan = readJSON(pk), hist = readJSON(hk) || {};
-    if((plan || Object.keys(hist).length) && valid(pack(plan, hist))) return {plan:plan, hist:hist};
+  for(const [pk, hk, ck] of [[K.plan, K.hist, K.chk], [LEGACY.plan, LEGACY.hist, LEGACY.chk]]){
+    const plan = readJSON(pk), hist = readJSON(hk) || {}, chk = readJSON(ck);
+    if((plan || Object.keys(hist).length || (chk && chk.cards && chk.cards.length)) && valid(pack(plan, hist, chk))) return {plan:plan, hist:hist, chk:chk};
   }
   return null;
 }
@@ -1192,16 +1418,16 @@ async function firstTime(){   // aucune ligne en ligne pour cet utilisateur
   const c = await ask('Données locales trouvées', 'Des données locales ont été trouvées sur cet appareil. Voulez-vous les envoyer vers votre compte en ligne ?',
     ['Importer les données locales vers le cloud', 'Commencer avec un planning vide', 'Annuler']);
   if(c === 0){
-    download(pack(cand.plan, cand.hist), 'planning-sauvegarde-locale');   // sauvegarde avant envoi
-    applyData({plan:cand.plan, history:cand.hist});
+    download(pack(cand.plan, cand.hist, cand.chk), 'planning-sauvegarde-locale');   // sauvegarde avant envoi
+    applyData({plan:cand.plan, history:cand.hist, checklists:cand.chk});
     meta = {dirty:true, base:null, localAt:new Date().toISOString()}; saveMeta();
     await pushNow(true);
     notice = meta.dirty ? 'La sauvegarde en ligne a échoué : vos données locales sont conservées et seront renvoyées.' : 'Données locales importées vers votre compte.';
     return true;
   }
   if(c === 1){
-    download(pack(cand.plan, cand.hist), 'planning-sauvegarde-locale');
-    ls.del(K.plan); ls.del(K.hist);   // uniquement le cache de ce compte ; les clés d'origine restent intactes
+    download(pack(cand.plan, cand.hist, cand.chk), 'planning-sauvegarde-locale');
+    ls.del(K.plan); ls.del(K.hist); ls.del(K.chk);   // uniquement le cache de ce compte ; les clés d'origine restent intactes
     meta = {dirty:true, base:null, localAt:new Date().toISOString()}; saveMeta();
     return true;
   }
@@ -1213,7 +1439,7 @@ async function start(u){
   if(starting || booted) return;
   starting = true; user = u;
   const K = window.CloudSync.keys;
-  K.plan = LEGACY.plan + '.u.' + u.id; K.hist = LEGACY.hist + '.u.' + u.id; metaKey = 'planning39h.sync.u.' + u.id;   // cache séparé par compte
+  K.plan = LEGACY.plan + '.u.' + u.id; K.hist = LEGACY.hist + '.u.' + u.id; K.chk = LEGACY.chk + '.u.' + u.id; metaKey = 'planning39h.sync.u.' + u.id;   // cache séparé par compte
   meta = Object.assign({dirty:false, base:null, localAt:null}, readJSON(metaKey));
   show('loading'); status('loading');
   try{
@@ -1226,7 +1452,7 @@ async function start(u){
     status(navigator.onLine ? 'error' : 'offline');
   }
   $('acctUser').textContent = u.email || '';
-  window.bootPlanning(); window.bootHistory();   // l'application démarre seulement ici
+  window.bootChecklists(); window.bootPlanning(); window.bootHistory();   // l'application démarre seulement ici
   booted = true; starting = false; show('app');
   if(notice) msg('acctMsg', notice);
   if(meta.dirty) pushNow();
