@@ -8,79 +8,68 @@
 <style>
 :root{
   --bg:#f3f5f4;--card:#ffffff;--ink:#1d2a27;--muted:#5f6f6a;--line:#dbe2df;
-  --accent:#1f6f5c;--accent-soft:#dcefe9;--warn:#a85a00;--warn-soft:#fdf0dc;--ok:#1f6f5c;--lock:#e8ecf5;--gold:#c9a227;
+  --accent:#1f6f5c;--accent-soft:#dcefe9;--warn:#a85a00;--warn-soft:#fdf0dc;--ok:#1f6f5c;--lock:#e8ecf5;
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#121a18;--card:#1a2522;--ink:#e6efec;--muted:#93a39e;--line:#2c3a36;
-    --accent:#4fc3a1;--accent-soft:#1d3a33;--warn:#f0b35c;--warn-soft:#3a2d17;--ok:#4fc3a1;--lock:#232d44;--gold:#e3c14a;color-scheme:dark;
+    --accent:#4fc3a1;--accent-soft:#1d3a33;--warn:#f0b35c;--warn-soft:#3a2d17;--ok:#4fc3a1;--lock:#232d44;color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#121a18;--card:#1a2522;--ink:#e6efec;--muted:#93a39e;--line:#2c3a36;
-  --accent:#4fc3a1;--accent-soft:#1d3a33;--warn:#f0b35c;--warn-soft:#3a2d17;--ok:#4fc3a1;--lock:#232d44;--gold:#e3c14a;color-scheme:dark;
+  --accent:#4fc3a1;--accent-soft:#1d3a33;--warn:#f0b35c;--warn-soft:#3a2d17;--ok:#4fc3a1;--lock:#232d44;color-scheme:dark;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
-[hidden]{display:none!important}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-main{max-width:900px;margin:0 auto;padding:12px 12px 28px}
-header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-h1{margin:0;font-size:1.35rem;letter-spacing:-.01em}
-h2{margin:0 0 8px;font-size:1rem}
+main{max-width:900px;margin:0 auto;padding:20px 16px 40px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+h1{margin:0;font-size:1.6rem;letter-spacing:-.01em}
 .date{color:var(--muted);font-size:.95rem}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
-/* Champs et boutons */
-input[type=text],input[type=search],input[type=url],input[type=date],input[type=time],input[type=email],input[type=password],input[type=number],select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
-input[type=number]{width:120px;text-align:right}
-input[type=color]{width:32px;height:30px;padding:0;border:1px solid var(--line);border-radius:6px;background:none;flex:none}
-button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
-button:hover{border-color:var(--accent)}
-button.primary{background:var(--accent);border-color:var(--accent);color:var(--card);font-weight:600}
-button.danger{color:var(--warn)}
-button:disabled{opacity:.4;cursor:default}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-label.field,.field{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-.hint{color:var(--muted);font-size:.85rem;margin:6px 0 0}
-.hint.err{color:var(--warn)}
-.hint.empty{padding:14px;text-align:center;border:1px dashed var(--line);border-radius:10px;margin:8px 0}
-details{margin-top:10px}summary{cursor:pointer;color:var(--muted);font-size:.9rem}
-/* Boutons icônes : libellé en infobulle (title au survol, bulle au focus clavier) */
-.ib{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:1px solid transparent;border-radius:7px;background:none;font-size:.9rem;line-height:1;position:relative;flex:none;text-decoration:none;color:var(--ink)}
-.ib:hover{background:var(--accent-soft);border-color:var(--line)}
-.ib[data-lbl]:focus-visible::after{content:attr(data-lbl);position:absolute;bottom:calc(100% + 6px);right:0;z-index:30;white-space:nowrap;padding:4px 8px;border-radius:6px;background:var(--ink);color:var(--card);font:500 .75rem/1.2 system-ui,sans-serif;pointer-events:none}
-@media (pointer:coarse){.ib{width:36px;height:36px;font-size:1rem}}
-/* Semaine */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px}
-.stat{border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+h2{margin:0 0 12px;font-size:1.05rem}
+label.field{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+input[type=number]{width:120px;padding:9px 10px;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;text-align:right}
+input[type=number]:focus-visible,button:focus-visible,select:focus-visible,input[type=checkbox]:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .stat span{display:block;color:var(--muted);font-size:.85rem}
-.stat strong{font-size:1.15rem;font-variant-numeric:tabular-nums}
+.stat strong{font-size:1.3rem;font-variant-numeric:tabular-nums}
 .stat.total{background:var(--accent-soft);border-color:transparent}
-.bar{height:12px;border-radius:6px;background:var(--line);overflow:hidden;display:flex;margin-top:10px}
+.bar{height:14px;border-radius:7px;background:var(--line);overflow:hidden;display:flex;margin-top:14px}
 .bar i{display:block;height:100%;transition:width .25s}
 .bar .done{background:var(--accent)}
 .bar .plan{background:var(--accent);opacity:.35}
 .barlabel{display:flex;justify-content:space-between;color:var(--muted);font-size:.85rem;margin-top:6px}
-.msg{padding:8px 12px;border-radius:10px;margin-bottom:10px;font-weight:500}
+.msg{padding:10px 12px;border-radius:10px;margin-bottom:16px;font-weight:500}
 .msg.ok{background:var(--accent-soft);color:var(--ok)}
 .msg.warn{background:var(--warn-soft);color:var(--warn)}
 .msg:empty{display:none}
 .tablewrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-th,td{padding:6px;text-align:left;border-bottom:1px solid var(--line)}
+th,td{padding:10px 8px;text-align:left;border-bottom:1px solid var(--line)}
 th{font-size:.85rem;color:var(--muted);font-weight:600}
 td.num,th.num{text-align:right}
 tr.today td:first-child{border-left:4px solid var(--accent);padding-left:10px}
-tr.today,tr.off{background:var(--accent-soft)}
+tr.today{background:var(--accent-soft)}
 tr.locked{background:var(--lock)}
-tr.off .cap{color:var(--accent);font-weight:600}
 .badge{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:99px;background:var(--accent);color:var(--card);font-size:.75rem;font-weight:600}
 .lock{display:inline-flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap}
 .lock input{width:20px;height:20px;accent-color:var(--accent)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+button{font:inherit;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.danger{color:var(--warn)}
+.hint{color:var(--muted);font-size:.85rem;margin:10px 0 0}
+@media (max-width:480px){
+  th,td{padding:10px 4px}
+  input[type=number]{width:92px}
+  .lock span{font-size:.9rem}
+}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .seg label{cursor:pointer;position:relative}
 .seg input{position:absolute;opacity:0;pointer-events:none}
@@ -89,51 +78,61 @@ tr.off .cap{color:var(--accent);font-weight:600}
 .seg input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--card)}
 .seg input:checked+span small{color:var(--card)}
 .seg input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+details{margin-top:12px}summary{cursor:pointer;color:var(--muted);font-size:.9rem}
 .times{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:10px}
 .times label{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
-.times input{width:100%}
+.times input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%}
 .cap{display:block;color:var(--muted);font-size:.8rem;font-weight:400}
 .hm{display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-size:.9rem}
-.hm input[type=number]{width:58px;padding:7px 6px}
+.hm input[type=number]{width:58px;padding:8px 6px}
 .times .hm{color:var(--ink)}
+@media (max-width:480px){.hm input[type=number]{width:50px}.hm{gap:3px}}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:99px;cursor:pointer}
 .chip input{width:18px;height:18px;accent-color:var(--accent)}
 .chip.on{background:var(--accent-soft);border-color:var(--accent)}
-.tabs{display:flex;gap:4px;margin-bottom:10px;border-bottom:1px solid var(--line);overflow-x:auto}
-.tabs button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:8px 12px;color:var(--muted);white-space:nowrap}
+tr.off{background:var(--accent-soft)}
+tr.off .cap{color:var(--accent);font-weight:600}
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:10px 14px;color:var(--muted)}
 .tabs button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
-.subtabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
-.subtabs button{padding:6px 14px;border-radius:99px}
-.subtabs button.on{background:var(--accent);border-color:var(--accent);color:var(--card);font-weight:600}
 .depart{background:var(--accent);color:var(--card);border:0}
 .depart.warn{background:var(--warn)}
-.dep-main{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.dep-main .dep-grid{flex:1;min-width:200px}
 .dep-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .dep-grid .lbl{display:block;font-size:.85rem;opacity:.9}
 .dep-grid strong{font-size:1.6rem;font-variant-numeric:tabular-nums}
-.dep-grid .big{font-size:2.1rem;line-height:1.1}
-.dep-grid .count{font-size:1.7rem;font-variant-numeric:tabular-nums}
-.dprog{margin-top:10px}
-.dbar{height:12px;border-radius:6px;background:rgba(255,255,255,.25);overflow:hidden}
-.dbar i{display:block;height:100%;width:0;background:#fff;border-radius:6px;transition:width .6s}
-.dlab{display:flex;justify-content:space-between;font-size:.85rem;margin-top:5px}
+.dep-grid .big{font-size:2.5rem;line-height:1.1}
 body.school #tab-semaine .card:not([data-keep]){display:none}
 .head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .head h2{margin:0}
-.dhead h2{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
-.acts{display:inline-flex;gap:6px;align-items:center}
 .tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:.75rem;font-weight:600;background:var(--accent-soft);color:var(--accent)}
 .tag.ecole{background:var(--lock);color:var(--ink)}
 .pos{color:var(--ok)}.neg{color:var(--warn)}
 td.act{white-space:nowrap;text-align:right}
-td.act button:not(.ib){padding:5px 9px;font-size:.85rem}
+td.act button{padding:5px 9px;font-size:.85rem}
+button:disabled{opacity:.4;cursor:default}
+.controls{display:flex;gap:12px;flex-wrap:wrap}
+.controls label{display:flex;flex-direction:column;gap:3px;font-size:.85rem;color:var(--muted)}
 .split{display:flex;height:16px;border-radius:8px;overflow:hidden;margin:6px 0}
 .split i{display:block}
 dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:18px;width:calc(100% - 32px);max-width:420px}
 dialog::backdrop{background:rgba(0,0,0,.45)}
-#ckDialog{max-width:560px}
+.chart{overflow-x:auto}
+.dep-main{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.dep-main .dep-grid{flex:1;min-width:200px}
+.dep-grid .count{font-size:2rem;font-variant-numeric:tabular-nums}
+.dprog{margin-top:14px}
+.dbar{height:12px;border-radius:6px;background:rgba(255,255,255,.25);overflow:hidden}
+.dbar i{display:block;height:100%;width:0;background:#fff;border-radius:6px;transition:width .6s}
+.dlab{display:flex;justify-content:space-between;font-size:.85rem;margin-top:5px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:.85rem;color:var(--muted)}
+.lg{display:inline-flex;align-items:center;gap:6px}
+.lg i{display:inline-block}
+.k-dot{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.k-bar{width:12px;height:12px;border-radius:3px;background:var(--c)}
+.k-line{width:18px;border-top:3px dashed var(--c)}
+.k-ghost{width:12px;height:12px;border-radius:3px;background:var(--c);opacity:.35;border:1px dashed var(--c)}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
 .clock{width:124px;height:124px;flex:none}
 .clock .face{fill:var(--card);stroke:var(--line);stroke-width:2}
 .clock .tick{stroke:var(--muted);stroke-width:1.2;stroke-linecap:round}
@@ -147,148 +146,80 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 .info:hover,.info:focus-visible{color:var(--accent);border-color:var(--accent)}
 .depart .info{color:inherit;border-color:currentColor;opacity:.85}
 #tip{position:fixed;z-index:50;max-width:260px;padding:8px 10px;border-radius:8px;background:var(--ink);color:var(--card);font-size:.85rem;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.25);pointer-events:none}
-@media (prefers-reduced-motion:reduce){.bar i,.dbar i{transition:none}}
-@media (max-width:480px){
-  input[type=number]{width:92px}
-  .lock span{font-size:.9rem}
-  .hm input[type=number]{width:50px}.hm{gap:3px}
-}
+#tip[hidden]{display:none}
+/* Interface compacte */
+main{padding:12px 12px 28px}
+header{margin-bottom:10px}
+h1{font-size:1.35rem}
+.card{padding:12px;margin-bottom:10px}
+h2{margin:0 0 8px;font-size:1rem}
+.stats{grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px}
+.stat{padding:7px 10px}
+.stat strong{font-size:1.15rem}
+.bar{margin-top:10px;height:12px}
+th,td{padding:6px}
+.tabs{margin-bottom:10px}
+.tabs button{padding:8px 12px}
+.msg{padding:8px 12px;margin-bottom:10px}
+.dep-main{gap:12px}
+.dep-grid .big{font-size:2.1rem}
+.dep-grid .count{font-size:1.7rem}
+.dprog{margin-top:10px}
+.actions{margin-top:10px}
+.hint{margin:6px 0 0}
 /* Connexion, indicateur de synchronisation */
 body:not(.authed) main{display:none}
 .authbox{max-width:380px;margin:10vh auto 0}
 .authbox label{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;font-size:.9rem;color:var(--muted)}
-.authbox input{width:100%}
+.authbox input{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
 #syncChip{position:fixed;left:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:40;font-size:.75rem;padding:3px 10px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--muted);pointer-events:none}
 #syncChip.ok{color:var(--ok)}
 #syncChip.warn{color:var(--warn)}
-/* Checklists : grille de cartes */
+/* Checklists */
 .ck-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
 .ck-card{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
 .ck-open{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-height:68px;border-radius:8px}
-.ck-open:focus-visible,.th-sort:focus-visible,.lgb:focus-visible,.tagx:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.ck-open:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .ck-ico{font-size:1.6rem;line-height:1.2}
 .ck-title{font-weight:600;overflow-wrap:anywhere}
 .ck-count{color:var(--muted);font-size:.85rem}
 .ck-prog{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
 .ck-prog i{display:block;height:100%;background:var(--c)}
-.ck-btns{display:flex;gap:4px;justify-content:flex-end}
-/* Lignes standard */
-.ck-item{display:flex;align-items:center;gap:8px;min-height:38px;padding:2px 0;border-bottom:1px solid var(--line)}
-.ck-item input[type=checkbox]{width:20px;height:20px;flex:none;accent-color:var(--c);margin:0}
-.ck-item input[type=text]{flex:1;min-width:0;background:transparent;border-color:transparent;border-radius:6px;padding:5px 6px}
-.ck-item input[type=text]:focus,.ck-item input[type=text]:hover{border-color:var(--line);background:var(--bg)}
+.ck-btns{display:flex;gap:6px;flex-wrap:wrap}
+.ck-btns button{padding:6px 10px;font-size:.85rem}
+.ck-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
+.ck-item input[type=checkbox]{width:24px;height:24px;flex:none;accent-color:var(--c)}
+.ck-item input[type=text]{flex:1;min-width:0;font:inherit;color:var(--ink);background:transparent;border:1px solid transparent;border-radius:6px;padding:7px 6px}
+.ck-item input[type=text]:focus{border-color:var(--line);background:var(--bg)}
 .ck-item.done input[type=text]{text-decoration:line-through;color:var(--muted)}
-/* Dialogues des checklists */
+.ck-item button{padding:6px 10px}
 .ckl{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;font-size:.9rem;color:var(--muted)}
+.ckl input[type=text]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px}
 .ck-emoji,.ck-sw{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .ck-emoji button{font-size:1.2rem;padding:4px 8px}
 .ck-sw button{width:30px;height:30px;padding:0;border-radius:50%;background:var(--c)}
 .ck-emoji button.on,.ck-sw button.on{outline:3px solid var(--accent);outline-offset:1px}
-.rep{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;color:var(--ink)}
-.rep input[type=number]{width:70px}
-.ce-row{border:1px solid var(--line);border-radius:8px;padding:6px;margin-bottom:6px}
-.ce-top{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.ce-top input[type=text]{flex:1 1 120px;min-width:0}
-.ce-opts{margin:6px 0 0 8px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
-.ce-opt{display:flex;gap:6px;align-items:center;width:100%}
-.ce-opt input[type=text]{flex:1;min-width:0}
-.ce-opts>button,.ce-add{padding:4px 10px;font-size:.85rem}
-/* Lignes récurrentes (Sport / Ménage) : une rangée compacte */
-.g-item{border-bottom:1px solid var(--line)}
-.g-row{display:flex;align-items:center;gap:8px;min-height:38px;padding:2px 0;flex-wrap:wrap}
-.g-row input[type=checkbox]{width:20px;height:20px;flex:none;accent-color:var(--c,var(--accent));margin:0}
-.g-title{flex:1 1 110px;min-width:0;font-weight:600;overflow-wrap:anywhere}
-label.g-title{cursor:pointer}
-.g-val{display:inline-flex;align-items:center;gap:5px;font-size:.88rem;color:var(--muted);white-space:nowrap}
-.g-val input[type=number]{width:64px;padding:4px 6px}
-.g-val .hm input[type=number]{width:46px}
-.g-st{font-size:.8rem;color:var(--muted)}
-.g-err{font-size:.8rem;color:var(--warn)}
-.g-err:empty{display:none}
-.g-acts{display:inline-flex;gap:2px;margin-left:auto}
-.g-hist{padding:2px 0 8px 28px;border-top:1px dashed var(--line)}
-.g-h{min-height:34px}
-.g-h .g-title{font-weight:400;font-size:.9rem;flex:0 1 150px}
-.g-row.arch .g-title{color:var(--muted);font-weight:500}
-.ck-auto{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;flex:none;border:2px solid var(--muted);border-radius:5px;font-weight:700;font-size:.8rem;line-height:1;color:transparent;user-select:none}
+.subtabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.subtabs button.on{background:var(--accent);border-color:var(--accent);color:var(--card)}
+/* Lignes récurrentes (cartes Sport / Ménage) */
+.ck-goal{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:8px}
+.ck-goal .meta{color:var(--muted);font-size:.85rem}
+.ck-goal .ck-btns{margin-top:6px;align-items:center}
+.ck-goal details{margin-top:6px}
+.ck-per{flex-wrap:wrap}
+.ck-lab{display:inline-flex;align-items:center;gap:8px;min-width:0;cursor:pointer}
+.ck-lab input[type=number]{width:92px}
+.ck-grp{cursor:default;flex-wrap:wrap}
+.ck-hist{margin-top:6px}
+/* Titre de ligne cliquable (ouvre le dialogue de réglage) */
+.ck-line{all:unset;cursor:pointer;font-weight:700;border-radius:6px;overflow-wrap:anywhere;text-decoration:underline dotted;text-underline-offset:3px}
+.ck-line::after{content:" ✎";font-weight:400;color:var(--muted)}
+.ck-line:hover{color:var(--accent)}
+.ck-line:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+/* Case cochée automatiquement (objectif temps / nombre atteint) */
+.ck-auto{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;flex:none;border:2px solid var(--muted);border-radius:5px;font-weight:700;line-height:1;color:transparent;user-select:none}
 .ck-auto.on{background:var(--c,var(--accent));border-color:var(--c,var(--accent));color:#fff}
-.ck-auto.na{visibility:hidden}
-.pill{display:inline-flex;align-items:center;padding:1px 8px;border-radius:99px;font-size:.75rem;font-weight:600;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
-.pill.late{background:var(--warn-soft);color:var(--warn)}
-.pill.soon{background:var(--lock);color:var(--ink)}
-/* Checklist paramétrable : tableau compact */
-.quick{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:2px 0 8px}
-.qgrp{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center}
-.qlbl{font-size:.8rem;color:var(--muted)}
-.fchip{padding:3px 10px;border-radius:99px;font-size:.82rem}
-.fchip.dot::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--c);margin-right:5px}
-.fchip.on{background:var(--accent);border-color:var(--accent);color:var(--card);font-weight:600}
-.ct{min-width:max-content}
-.ct th,.ct td{padding:3px 4px;vertical-align:middle;white-space:nowrap}
-.ct tbody tr{height:38px}
-.ct td input[type=text],.ct td input[type=url],.ct td input[type=number],.ct td input[type=date],.ct td select,.ct td textarea{padding:4px 6px;border-color:transparent;background:transparent;border-radius:6px}
-.ct td input:hover,.ct td select:hover,.ct td textarea:hover,.ct td input:focus,.ct td select:focus,.ct td textarea:focus{border-color:var(--line);background:var(--bg)}
-.ct td input[type=text]{width:100%;min-width:170px}
-.ct td textarea{display:block;width:100%;min-width:210px;height:31px;resize:none;white-space:pre-wrap}
-.ct td input[type=number]{width:84px}
-.ct td input[type=url]{min-width:150px}
-.ct td input[type=checkbox]{width:20px;height:20px;accent-color:var(--c,var(--accent));vertical-align:middle;margin:0 4px}
-.ct td select{max-width:190px;border-left:4px solid transparent}
-.ct tr.done td input[type=text],.ct tr.done td textarea{text-decoration:line-through;color:var(--muted)}
-.ct tr.flt th{padding-top:0}
-.ct tr.flt select,.ct tr.flt input{font-size:.8rem;padding:3px 5px;width:100%;min-width:74px;font-weight:400}
-.th-sort{all:unset;cursor:pointer;font-weight:600;border-radius:4px;padding:2px}
-.th-sort:hover{color:var(--accent)}
-.tags{display:inline-flex;gap:4px;align-items:center}
-.tagc{display:inline-flex;align-items:center;gap:4px;padding:1px 7px;border:1px solid var(--line);border-radius:99px;font-size:.8rem;white-space:nowrap}
-.tagc::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c,var(--muted));flex:none}
-.tagx{all:unset;cursor:pointer;padding:0 3px;border-radius:50%;color:var(--muted)}
-.ct td select.tag-add{width:44px}
-.rawv{padding:3px 8px;font-size:.8rem;border-style:dashed;color:var(--warn);max-width:220px;overflow:hidden;text-overflow:ellipsis}
-.pillbtn{padding:2px 9px;border-radius:99px;font-size:.8rem}
-.unit{color:var(--muted);font-size:.8rem;margin-left:3px}
-/* Dashboards : filtres, graphiques */
-.controls{display:flex;gap:10px 14px;flex-wrap:wrap;align-items:flex-end}
-.controls label,.controls .fl{display:flex;flex-direction:column;gap:3px;font-size:.8rem;color:var(--muted)}
-.controls select,.controls input[type=date]{padding:6px 8px}
-.pf{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
-.pf .hint{flex-basis:100%;margin:0;color:var(--warn)}
-.pf .hint:empty{display:none}
-.ms{position:relative}
-.ms-btn{min-width:150px;text-align:left;padding:6px 8px;background:var(--bg)}
-.ms-panel{position:absolute;z-index:35;top:calc(100% + 4px);left:0;min-width:220px;max-width:min(320px,86vw);max-height:300px;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
-.controls .ms-opt{flex-direction:row;align-items:center;gap:8px;padding:6px;border-radius:6px;font-size:.9rem;color:var(--ink);cursor:pointer}
-.ms-opt:hover{background:var(--accent-soft)}
-.ms-opt input{width:18px;height:18px;accent-color:var(--accent);flex:none;margin:0}
-.ms-opt .b{font-weight:600}
-.chart{overflow-x:auto}
-.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:.85rem;color:var(--muted)}
-.lg{display:inline-flex;align-items:center;gap:6px}
-.lg i{display:inline-block}
-.lgb{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:1px 5px;border-radius:6px}
-.lgb.off{opacity:.45;text-decoration:line-through}
-.k-dot{width:10px;height:10px;border-radius:50%;background:var(--c)}
-.k-bar{width:12px;height:12px;border-radius:3px;background:var(--c)}
-.k-main{width:18px;height:4px;border-radius:2px;background:var(--c)}
-.k-line{width:18px;border-top:3px dashed var(--c)}
-.k-ghost{width:12px;height:12px;border-radius:3px;background:var(--c);opacity:.35;border:1px dashed var(--c)}
-.mini-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
-.mini{border:1px solid var(--line);border-radius:10px;padding:8px}
-.mini b{display:block;font-size:.85rem;overflow-wrap:anywhere}
-.mini span{font-size:.8rem;color:var(--muted)}
-.mini svg{display:block;width:100%;height:56px;margin-top:4px}
-.hb{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.hb li{display:grid;grid-template-columns:minmax(80px,28%) 1fr auto;gap:8px;align-items:center;font-size:.88rem}
-.hb-n{overflow-wrap:anywhere}
-.hb-t{height:12px;border-radius:6px;background:var(--line);overflow:hidden}
-.hb-t i{display:block;height:100%;border-radius:6px}
-.hb-v{color:var(--muted);font-size:.8rem;white-space:nowrap}
-.alt table{font-size:.85rem}
-@media (max-width:560px){
-  .g-acts{flex-basis:100%;justify-content:flex-end;margin-left:0}
-  .hb li{grid-template-columns:1fr auto}
-  .hb-t{grid-column:1 / -1;order:3}
-}
+.ck-auto[hidden]{display:none}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
@@ -401,7 +332,7 @@ label.g-title{cursor:pointer}
   <!-- ONGLET HISTORIQUE -->
   <div id="tab-histo" class="panel" hidden>
     <section class="card">
-      <div class="head"><h2>Semaines enregistrées<span class="info" tabindex="0" role="button" aria-label="Aide" data-tip="La semaine en cours est enregistrée automatiquement ; elle se modifie dans l’onglet Semaine.">i</span></h2><button type="button" id="hAdd" class="primary">+ Semaine</button></div>
+      <div class="head"><h2>Semaines enregistrées<span class="info" tabindex="0" role="button" aria-label="Aide" data-tip="La semaine en cours est enregistrée automatiquement ; elle se modifie dans l’onglet Semaine.">i</span></h2><button type="button" id="hAdd">+ Ajouter une semaine</button></div>
       <div class="tablewrap"><table>
         <thead><tr><th>Semaine</th><th>Type</th><th class="num">Objectif</th><th class="num">Effectué</th><th class="num">Écart</th><th></th></tr></thead>
         <tbody id="hBody"></tbody>
@@ -409,29 +340,28 @@ label.g-title{cursor:pointer}
     </section>
   </div>
 
-  <!-- ONGLET DASHBOARD : sous-sections Heures / Sport / Ménage / Devoirs -->
+  <!-- ONGLET DASHBOARD : sous-sections Heures / Sport / Ménage -->
   <div id="tab-dash" class="panel" hidden>
     <nav class="subtabs" aria-label="Sections du Dashboard">
-      <button type="button" data-sub="heures">Heures</button><button type="button" data-sub="sport">Sport</button><button type="button" data-sub="menage">Ménage</button><button type="button" data-sub="devoirs">Devoirs</button>
+      <button type="button" data-sub="heures">Heures</button><button type="button" data-sub="sport">Sport</button><button type="button" data-sub="menage">Ménage</button>
     </nav>
     <div id="dash-heures">
     <section class="card controls">
       <label>Année <select id="fYear"></select></label>
       <label>Type <select id="fType"><option value="all">Tous</option><option value="entreprise">Entreprise</option><option value="ecole">École</option></select></label>
       <label>Regrouper <select id="fGroup"><option value="week">Par semaine</option><option value="month">Par mois</option></select></label>
-      <label>Tri du tableau <select id="fSort"><option value="recent">Récent d’abord</option><option value="old">Ancien d’abord</option><option value="done">Plus d’heures</option><option value="gap">Pire écart</option></select></label>
+      <label>Trier le tableau <select id="fSort"><option value="recent">Récent d’abord</option><option value="old">Ancien d’abord</option><option value="done">Plus d’heures</option><option value="gap">Pire écart</option></select></label>
     </section>
     <div id="dashWidgets"></div>
     </div>
     <div id="dash-sport" hidden></div>
     <div id="dash-menage" hidden></div>
-    <div id="dash-devoirs" hidden></div>
   </div>
 
   <!-- ONGLET CHECKLISTS -->
   <div id="tab-checklists" class="panel" hidden>
     <div id="ckGrid">
-      <div class="head"><h2>Mes checklists</h2><button type="button" id="ckNew" class="primary">+ Nouvelle checklist</button></div>
+      <div class="head"><h2>Mes checklists</h2><button type="button" id="ckNew">+ Nouvelle checklist</button></div>
       <div class="ck-grid" id="ckCards"></div>
     </div>
     <div id="ckDetail" hidden></div>
@@ -440,8 +370,8 @@ label.g-title{cursor:pointer}
   <section class="card" id="acct">
     <div class="head"><h2>Compte et données</h2><span class="date" id="acctUser"></span></div>
     <div class="actions" style="margin-top:0">
-      <button type="button" id="btnExport">Exporter</button>
-      <button type="button" id="btnImport">Importer</button>
+      <button type="button" id="btnExport">Exporter mes données</button>
+      <button type="button" id="btnImport">Importer des données</button>
       <input type="file" id="fileImport" accept=".json,application/json" hidden>
       <button type="button" id="btnLogout">Se déconnecter</button>
     </div>
@@ -452,12 +382,12 @@ label.g-title{cursor:pointer}
 
   <dialog id="wDialog" aria-labelledby="wTitle">
     <h2 id="wTitle"></h2>
-    <label class="field" style="margin-bottom:10px"><span>Lundi de la semaine</span><input type="date" id="wDate"></label>
+    <label class="field" style="margin-bottom:10px"><span>Lundi de la semaine</span><input type="date" id="wDate" style="font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)"></label>
     <label class="chip" style="display:flex;margin-bottom:10px"><input type="checkbox" id="wSchool"><span>Semaine école (35 h)</span></label>
     <label class="field" style="margin-bottom:10px"><span>Objectif</span><span id="wGoalBox"></span></label>
     <label class="field"><span>Effectué</span><span id="wDoneBox"></span></label>
-    <p class="hint err" id="wErr"></p>
-    <div class="actions"><button type="button" id="wSave" class="primary">Enregistrer</button><button type="button" id="wCancel">Annuler</button></div>
+    <p class="hint" id="wErr" style="color:var(--warn)"></p>
+    <div class="actions"><button type="button" id="wSave">Enregistrer</button><button type="button" id="wCancel">Annuler</button></div>
   </dialog>
 </main>
 
@@ -469,39 +399,37 @@ label.g-title{cursor:pointer}
     <label>Adresse e-mail<input type="email" id="authEmail" autocomplete="username" inputmode="email"></label>
     <label>Mot de passe<input type="password" id="authPass" autocomplete="current-password"></label>
     <div class="actions" style="margin-top:0">
-      <button type="submit" class="primary">Se connecter</button>
+      <button type="submit">Se connecter</button>
       <button type="button" id="btnSignup">Créer mon compte</button>
       <button type="button" id="btnReset">Mot de passe oublié</button>
     </div>
   </form>
   <form id="recForm" hidden>
     <label>Nouveau mot de passe<input type="password" id="recPass" autocomplete="new-password"></label>
-    <div class="actions" style="margin-top:0"><button type="submit" class="primary">Enregistrer le mot de passe</button></div>
+    <div class="actions" style="margin-top:0"><button type="submit">Enregistrer le mot de passe</button></div>
   </form>
   <p class="hint" id="authMsg" role="alert"></p>
 </section>
 <div id="syncChip" role="status">Vérification de la session…</div>
 <dialog id="cloudDialog" aria-labelledby="cdTitle"><h2 id="cdTitle"></h2><p id="cdText"></p><div class="actions" id="cdBtns"></div></dialog>
-
-<!-- Dialogue d'une carte : nom, type (à la création), icône, couleur, colonnes (cartes paramétrables) -->
 <dialog id="ckDialog" aria-labelledby="ckdTitle">
   <h2 id="ckdTitle"></h2>
-  <form id="ckForm" novalidate>
-    <label class="ckl">Nom<input type="text" id="ckdName" maxlength="60" autocomplete="off"></label>
-    <label class="ckl" id="ckdTypeBox">Type<select id="ckdType"><option value="standard">Standard (liste de cases)</option><option value="custom">Paramétrable (tableau à colonnes)</option></select></label>
+  <form id="ckForm">
+    <label class="ckl">Nom<input type="text" id="ckdName" maxlength="60"></label>
+    <label class="ckl">Type de checklist<select id="ckdType"><option value="standard">Standard</option><option value="sport">Sport</option><option value="menage">Ménage</option></select></label>
     <div class="ckl"><span>Icône</span><div class="ck-emoji" id="ckdEmojis"></div><input type="text" id="ckdEmoji" maxlength="8" aria-label="Autre emoji" placeholder="Autre emoji"></div>
     <div class="ckl"><span>Couleur</span><div class="ck-sw" id="ckdColors"></div></div>
-    <div class="ckl" id="ckdCols" hidden></div>
-    <p class="hint err" id="ckdErr" role="alert"></p>
-    <div class="actions"><button type="submit" class="primary">Enregistrer</button><button type="button" id="ckdCancel">Annuler</button></div>
+    <p class="hint" id="ckdErr" style="color:var(--warn)" role="alert"></p>
+    <div class="actions"><button type="submit">Enregistrer</button><button type="button" id="ckdCancel">Annuler</button></div>
   </form>
 </dialog>
 
-<!-- Dialogue d'une ligne (cartes Sport et Ménage) : titre, type d'objectif, objectif, unité, répétition -->
+<!-- Dialogue d'une ligne (cartes Sport et Ménage) : titre, réinitialisation, type d'objectif, objectif -->
 <dialog id="gDialog" aria-labelledby="gdTitle">
   <h2 id="gdTitle"></h2>
   <form id="gdForm" novalidate>
-    <label class="ckl" id="gdNameBox">Titre<input type="text" id="gdName" maxlength="60" autocomplete="off"></label>
+    <label class="ckl">Titre<input type="text" id="gdName" maxlength="60" autocomplete="off"></label>
+    <label class="ckl">Réinitialisation de la case<select id="gdFreq"><option value="daily">Chaque jour</option><option value="weekly">Chaque semaine (le lundi)</option></select></label>
     <label class="ckl">Type d’objectif<select id="gdMode"><option value="check">Simple case à cocher</option><option value="time">Temps</option><option value="number">Nombre</option></select></label>
     <div id="gdTimeBox" hidden>
       <div class="ckl"><span>Objectif de temps par période</span><span id="gdTimeHost"></span></div>
@@ -510,21 +438,10 @@ label.g-title{cursor:pointer}
       <label class="ckl">Objectif (nombre) par période<input type="number" id="gdTarget" min="0" step="any" inputmode="decimal"></label>
       <label class="ckl">Unité (facultative)<input type="text" id="gdUnit" maxlength="20" placeholder="répétitions, séances, km…" autocomplete="off"></label>
     </div>
-    <div class="ckl"><span>Répétition</span><span id="gdRepHost"></span></div>
     <p class="hint" id="gdGoalHint"></p>
-    <p class="hint">ℹ️ Un nouvel objectif s’applique à partir de la période en cours ; les périodes passées gardent l’objectif de l’époque. À chaque nouvelle période la case repart à zéro, sans rien effacer de l’historique.</p>
-    <p class="hint err" id="gdErr" role="alert"></p>
-    <div class="actions"><button type="submit" class="primary">Enregistrer</button><button type="button" id="gdCancel">Annuler</button></div>
-  </form>
-</dialog>
-
-<!-- Dialogue « Répétition » d'une cellule (cartes paramétrables) -->
-<dialog id="rpDialog" aria-labelledby="rpTitle">
-  <h2 id="rpTitle">Répétition</h2>
-  <form id="rpForm" novalidate>
-    <div class="ckl"><span id="rpHost"></span></div>
-    <p class="hint">Quand la ligne est cochée, elle se réarme : la date passe à l’occurrence suivante, la case se décoche et la réalisation est mémorisée.</p>
-    <div class="actions"><button type="submit" class="primary">Valider</button><button type="button" id="rpCancel">Annuler</button></div>
+    <p class="hint" id="gdKeep">ℹ️ Quand la case se réinitialise (chaque jour ou chaque lundi), rien n’est effacé : l’historique est conservé pour les statistiques.</p>
+    <p class="hint" id="gdErr" style="color:var(--warn)" role="alert"></p>
+    <div class="actions"><button type="submit">Enregistrer</button><button type="button" id="gdCancel">Annuler</button></div>
   </form>
 </dialog>
 
@@ -937,7 +854,7 @@ window.bootPlanning = function(){
    - Store : lecture/écriture JSON dans le cache localStorage de l'utilisateur (la synchro Supabase est gérée dans le dernier script).
    - PlanApp.registerWidget(w) : ajoute un widget au Dashboard Heures
      ({id, title, render(ctx) -> HTML}) ; ctx = {rows, groups, filters}.
-   - Le Dashboard comporte quatre sous-sections : #dash/heures (ici), #dash/sport, #dash/menage et #dash/devoirs (script Checklists).
+   - Le Dashboard comporte trois sous-sections : #dash/heures (ici), #dash/sport et #dash/menage (script Checklists).
    - Nouvelles données : ajouter une clé dans window.CloudSync.keys et l'inclure dans snapshot(), validChk()/valid() et applyData().
    ========================================================================== */
 window.bootHistory = function(){
@@ -978,7 +895,7 @@ window.bootHistory = function(){
     weeks[mondayOf(s.id)] = {type: s.school ? 'ecole' : 'entreprise', goal: s.goal, done: s.done};
     Store.write(HKEY, weeks);
     if(!$('tab-histo').hidden) renderHisto();
-    if(!$('tab-dash').hidden && !$('dash-heures').hidden) renderDash();
+    if(!$('tab-dash').hidden) renderDash();
   }
   document.addEventListener('planning:change', sync);
 
@@ -991,8 +908,8 @@ window.bootHistory = function(){
         '<td><span class="tag ' + r.type + '">' + (r.type === 'ecole' ? 'École' : 'Entreprise') + '</span>' + (c ? ' <span class="badge">En cours</span>' : '') + '</td>' +
         '<td class="num">' + fmt(r.goal) + '</td><td class="num">' + fmt(r.done) + '</td>' +
         '<td class="num ' + (gap >= 0 ? 'pos' : 'neg') + '">' + sgn(gap) + '</td>' +
-        '<td class="act"><button type="button" class="ib" title="Modifier" aria-label="Modifier la semaine" data-lbl="Modifier" data-edit="' + r.id + '"' + (c ? ' disabled' : '') + '>✏️</button> ' +
-        '<button type="button" class="ib" title="Supprimer" aria-label="Supprimer la semaine" data-lbl="Supprimer" data-del="' + r.id + '"' + (c ? ' disabled' : '') + '>🗑️</button></td></tr>';
+        '<td class="act"><button type="button" data-edit="' + r.id + '"' + (c ? ' disabled' : '') + '>Modifier</button> ' +
+        '<button type="button" class="danger" data-del="' + r.id + '"' + (c ? ' disabled' : '') + '>Supprimer</button></td></tr>';
     }).join('') : '<tr><td colspan="6">Aucune semaine enregistrée.</td></tr>';
   }
 
@@ -1064,7 +981,7 @@ window.bootHistory = function(){
   function infoIcon(t){
     return '<span class="info" tabindex="0" role="button" aria-label="Aide" data-tip="' + t.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">i</span>';
   }
-  /* Légende : k = dot (répartition) | bar (série) | line (objectif) | ghost (objectif de la semaine en cours) */
+  /* Légende pro : k = dot (répartition) | bar (série) | line (objectif) | ghost (objectif de la semaine en cours) */
   function legend(items){
     return '<div class="legend">' + items.map(function(i){ return '<span class="lg"><i class="k-' + i.k + '" style="--c:' + i.c + '"></i>' + i.t + '</span>'; }).join('') + '</div>';
   }
@@ -1142,8 +1059,8 @@ window.bootHistory = function(){
     $(p[0]).addEventListener('change', function(){ F[p[1]] = this.value; renderDash(); });
   });
 
-  /* ---- Onglets (routage par #hash : semaine, histo, dash/heures, dash/sport, dash/menage, dash/devoirs, checklists) ---- */
-  var TABS = ['semaine','histo','dash','checklists'], SUBS = ['heures','sport','menage','devoirs'], lastSub = 'heures';
+  /* ---- Onglets (routage par #hash : semaine, histo, dash/heures, dash/sport, dash/menage, checklists) ---- */
+  var TABS = ['semaine','histo','dash','checklists'], SUBS = ['heures','sport','menage'], lastSub = 'heures';
   function show(h){
     var parts = String(h).split('/'), t = parts[0];
     if(TABS.indexOf(t) < 0) t = 'semaine';
@@ -1206,44 +1123,38 @@ window.bootHistory = function(){
 
 <script>
 /* ==========================================================================
-   Onglet Checklists (cartes Standard / Paramétrable / Sport / Ménage) et Dashboards Sport / Ménage / Devoirs.
-   Données (clé window.CloudSync.keys.chk, synchronisées par la couche Supabase) — tous les champs récents sont facultatifs :
-   {defaultCards:{sport,menage,devoirs},                                         // cartes par défaut déjà créées (une seule fois, jamais recréées)
-    cards:[{id,type,title,icon,color,createdAt,updatedAt,order,                  // type : 'standard' | 'sport' | 'menage' | 'custom'
+   Onglet Checklists (cartes Standard / Sport / Ménage) et Dashboards Sport / Ménage.
+   Données (clé window.CloudSync.keys.chk, synchronisées par la couche Supabase) :
+   {defaultCards:{sport:true,menage:true},                                       // facultatif : cartes par défaut déjà créées (une seule fois, jamais recréées)
+    cards:[{id,type,title,icon,color,createdAt,updatedAt,order,
      items:[{id,text,checked,createdAt,updatedAt,order}],                        // lignes standard
-     goals:[{id,name,repeat:{every,unit},frequency,trackingMode,quantityKind,target,unit,active,archivedAt,createdAt,updatedAt,order,
-             // repeat.unit : 'day' | 'week' | 'month' | 'year' ; frequency ('daily' | 'weekly') : ancien champ, toujours lu, écrit quand il reste représentable
-             since,                                                              // jour local de début de la configuration actuelle (ancre des blocs de N jours)
-             pauses:[{from,to}], targetLog:[{until,target,unit}],                // archivages ; anciens objectifs (valables pour les périodes commençant avant « until »)
-             legacy:[{repeat,frequency,trackingMode,quantityKind,target,unit,from,to,records,targetLog}],
-             records:{'YYYY-MM-DD':{value,checked,targetAtTime,unitAtTime,updatedAt}}}],   // clé = premier jour local de la période
-     // cartes paramétrables (type 'custom') :
-     preset,                                                                     // 'devoirs' pour la carte Devoirs
-     columns:[{id,name,type,options:[{id,name,color}],order,unit,role,quick,def}],
-     rows:[{id,values:{<id de colonne>:valeur},createdAt,updatedAt,order,doneAt,anchorDay,log:[{at,due}]}]}]}
-   L'historique est relié aux identifiants, jamais aux noms. Tous les textes sont insérés via textContent / value.
+     goals:[{id,name,frequency,trackingMode,quantityKind,target,unit,active,archivedAt,createdAt,updatedAt,order,
+             // frequency : 'daily' | 'weekly' (réinitialisation de la case) ; trackingMode : 'check' | 'quantity'
+             // quantityKind (FACULTATIF, seulement si trackingMode = 'quantity') : 'time' (target et valeurs en minutes) | 'number' ; absent = 'number'
+             since,                                                              // jour local (YYYY-MM-DD) de début de la configuration actuelle
+             pauses:[{from,to}],                                                 // intervalles d'archivage (jours locaux)
+             legacy:[{frequency,trackingMode,quantityKind,target,unit,from,to,records}],   // anciennes configurations, conservées telles quelles
+             records:{'YYYY-MM-DD':{value,checked,targetAtTime,unitAtTime,updatedAt}}}]}]}
+   Clé de période : jour local (quotidien) ou lundi local (hebdomadaire). L'historique est relié à goal.id, jamais au nom.
+   Tous les textes sont insérés via textContent / value : jamais d'innerHTML avec des données utilisateur.
    ========================================================================== */
 (function(){
   'use strict';
   var EMOJIS = ['🛒','🧹','🧺','🏠','📚','💼','✅','📝','🧳','🍽️','🛠️','❤️','🎯','📦','🐾','🏋️','🏃'];
   var COLORS = ['#1f6f5c','#2f6fdb','#8a4fd1','#d1457a','#d9822b','#c9a227','#3a9d5d','#5f6f6a'];
-  var PAL = ['#2f6fdb','#d9822b','#8a4fd1','#3a9d5d','#d1457a','#c9a227','#1aa6b7','#8d6e63','#5c6bc0','#e0564a'];
-  var HEX = /^#[0-9a-fA-F]{6}$/, DKEY = /^\d{4}-\d{2}-\d{2}$/, NS = 'http://www.w3.org/2000/svg';
-  var TYPES = ['standard','sport','menage','custom'], TYPELBL = {standard:'Standard', sport:'Sport', menage:'Ménage', custom:'Paramétrable'};
+  var HEX = /^#[0-9a-fA-F]{6}$/, DKEY = /^\d{4}-\d{2}-\d{2}$/;
+  var TYPES = ['standard','sport','menage'], TYPELBL = {standard:'Standard', sport:'Sport', menage:'Ménage'};
+  var FREQ = {daily:'Chaque jour', weekly:'Chaque semaine'};
   var KINDS = ['check','time','number'], KIND = {check:'simple case', time:'temps', number:'nombre'};
-  var UNITS = ['day','week','month','year'], UL = {day:['jour','jours','j'], week:['semaine','semaines','sem.'], month:['mois','mois','mois'], year:['an','ans','an']};
-  var COLT = {text:'Texte', longtext:'Texte long', number:'Nombre', checkbox:'Case à cocher', date:'Date', select:'Liste déroulante', multi:'Étiquettes', repeat:'Répétition', priority:'Priorité', link:'Lien'};
-  var PRIO = {1:{name:'Basse', color:'#3a9d5d'}, 2:{name:'Moyenne', color:'#c9a227'}, 3:{name:'Haute', color:'#d1457a'}};
-  var PRMAP = {basse:1, faible:1, moyenne:2, normale:2, haute:3, 'élevée':3};
-  /* Cartes créées UNE SEULE FOIS par défaut (voir ensureDefaults). Simples données de départ, modifiables ensuite.
-     Ligne = [titre, unité de répétition, type d'objectif, objectif, unité]. */
+  /* Cartes créées UNE SEULE FOIS par défaut (voir ensureDefaults). Ce sont de simples données de départ, modifiables ensuite :
+     les Dashboards ne lisent jamais cette liste. Ligne = [titre, fréquence, type d'objectif, objectif, unité]. */
   var DEFAULT_CARDS = [
     {type:'sport', title:'Sport', icon:'🏋️', color:'#2f6fdb', lines:[
-      ['Courir','week','time',20,''], ['Marche','day','time',30,''], ['Pompes','day','number',30,'répétitions'],
-      ['Étirements','day','check',null,''], ['Séances de sport','week','number',3,'séances']]},
+      ['Courir','weekly','time',20,''], ['Marche','daily','time',30,''], ['Pompes','daily','number',30,'répétitions'],
+      ['Étirements','daily','check',null,''], ['Séances de sport','weekly','number',3,'séances']]},
     {type:'menage', title:'Ménage', icon:'🧹', color:'#3a9d5d', lines:[
-      ['Vaisselle','day','check',null,''], ['Ranger','day','time',10,''], ['Aspirateur','week','check',null,''],
-      ['Lessive','week','number',2,''], ['Salle de bain','week','check',null,''], ['Changer les draps','week','check',null,'']]}
+      ['Vaisselle','daily','check',null,''], ['Ranger','daily','time',10,''], ['Aspirateur','weekly','check',null,''],
+      ['Lessive','weekly','number',2,''], ['Salle de bain','weekly','check',null,''], ['Changer les draps','weekly','check',null,'']]}
   ];
 
   function now(){ return new Date().toISOString(); }   // horodatage technique uniquement (jamais utilisé pour calculer un jour ou une semaine)
@@ -1251,82 +1162,29 @@ window.bootHistory = function(){
     if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
     return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);   // secours
   }
-  function has(o, k){ return Object.prototype.hasOwnProperty.call(o, k); }
   function str(v, d){ return typeof v === 'string' ? v : d; }
   function iso(v){ return typeof v === 'string' && !isNaN(Date.parse(v)) ? v : now(); }
   function isObj(x){ return !!x && typeof x === 'object' && !Array.isArray(x); }
   function okNum(v){ return Number.isFinite(v) && v >= 0; }
   function byOrder(a, b){ return a.order - b.order; }
   function num(v){ return String(Math.round(v * 100) / 100).replace('.', ','); }
-  function dict(){ return Object.create(null); }
+  function dict(){ return Object.create(null); }   // dictionnaire sans prototype (une unité nommée « constructor » ne pose aucun problème)
   function fmtMin(v){   // durée en minutes → « 20 min », « 1 h 05 », « 2 h »
     v = Math.round(v);
     var h = Math.floor(v / 60), m = v % 60;
     return h ? h + ' h' + (m ? ' ' + String(m).padStart(2, '0') : '') : m + ' min';
   }
-  function kindOf(x){ return x.trackingMode !== 'quantity' ? 'check' : (x.quantityKind === 'time' ? 'time' : 'number'); }
+  function kindOf(x){ return x.trackingMode !== 'quantity' ? 'check' : (x.quantityKind === 'time' ? 'time' : 'number'); }   // type d'objectif effectif
 
-  /* ---- Dates LOCALES uniquement (jamais toISOString / UTC) ---- */
+  /* ---- Périodes : dates LOCALES uniquement (jamais toISOString / UTC) ---- */
   function dkey(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
   function pdate(k){ var p = k.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
   function addDays(k, n){ var d = pdate(k); d.setDate(d.getDate() + n); return dkey(d); }
-  function diffDays(a, b){ return Math.round((pdate(b) - pdate(a)) / 864e5); }
   function mondayKey(d){ var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay()+6) % 7)); return dkey(x); }
-  function mondayOfKey(k){ return mondayKey(pdate(k)); }
-  function ymOf(k){ return +k.slice(0, 4) * 12 + (+k.slice(5, 7) - 1); }
-  function ymKey(n){ return Math.floor(n / 12) + '-' + String(n % 12 + 1).padStart(2, '0') + '-01'; }
-  function dfmt(k, o){ return pdate(k).toLocaleDateString('fr-FR', o); }
-  function addMonthsClamp(k, n, day){   // le 31 retombe sur le dernier jour du mois
-    var p = pdate(k), t = p.getFullYear() * 12 + p.getMonth() + n, y = Math.floor(t / 12), m = t % 12;
-    return dkey(new Date(y, m, Math.min(day || p.getDate(), new Date(y, m + 1, 0).getDate())));
-  }
-  function nextOcc(k, rp, day){ return rp.unit === 'day' ? addDays(k, rp.every) : rp.unit === 'week' ? addDays(k, 7 * rp.every) : addMonthsClamp(k, rp.unit === 'year' ? 12 * rp.every : rp.every, day); }
+  function pkeyF(f, d){ return f === 'weekly' ? mondayKey(d) : dkey(d); }   // clé de période : jour, ou lundi de la semaine
+  function pend(f, k){ return f === 'weekly' ? addDays(k, 6) : k; }         // dernier jour de la période
 
-  /* ---- Répétition : {every:N, unit:'day'|'week'|'month'|'year'} ---- */
-  function isRep(r){ return isObj(r) && Number.isInteger(r.every) && r.every >= 1 && r.every <= 999 && UNITS.indexOf(r.unit) >= 0; }
-  function repOf(o){ return isRep(o.repeat) ? {every: o.repeat.every, unit: o.repeat.unit} : {every: 1, unit: o.frequency === 'weekly' ? 'week' : 'day'}; }   // ancien champ frequency toujours lu
-  function sameRep(a, b){ return a.every === b.every && a.unit === b.unit; }
-  function repLbl(r){
-    if(!isRep(r)) return 'Ne pas répéter';
-    return r.every === 1 ? {day:'Chaque jour', week:'Chaque semaine', month:'Chaque mois', year:'Chaque année'}[r.unit] : 'Tous les ' + r.every + ' ' + UL[r.unit][1];
-  }
-  function repShort(r){ return r.every + ' ' + UL[r.unit][2] + (r.unit === 'year' && r.every > 1 ? 's' : ''); }
-  function withFreq(o){   // garde l'ancien champ frequency quand il reste représentable
-    var r = o.repeat;
-    if(r.every === 1 && r.unit === 'day') o.frequency = 'daily'; else if(r.every === 1 && r.unit === 'week') o.frequency = 'weekly'; else delete o.frequency;
-    return o;
-  }
-
-  /* ---- Périodes d'une série s = {rp, from…} : blocs de N jours ancrés sur s.from, semaines à partir du lundi, mois et années calendaires.
-     La clé d'une période est son premier jour local. ---- */
-  function pkey(s, d){
-    var k = typeof d === 'string' ? d : dkey(d), n = s.rp.every, u = s.rp.unit, a;
-    if(u === 'day') return n === 1 ? k : addDays(s.from, Math.floor(diffDays(s.from, k) / n) * n);
-    if(u === 'week'){ k = mondayOfKey(k); if(n === 1) return k; a = mondayOfKey(s.from); return addDays(a, Math.floor(diffDays(a, k) / (7 * n)) * 7 * n); }
-    var step = u === 'year' ? 12 * n : n, base = u === 'year' ? +s.from.slice(0, 4) * 12 : ymOf(s.from);
-    return ymKey(base + Math.floor((ymOf(k) - base) / step) * step);
-  }
-  function pnext(s, k){ var n = s.rp.every, u = s.rp.unit; return u === 'day' ? addDays(k, n) : u === 'week' ? addDays(k, 7 * n) : ymKey(ymOf(k) + (u === 'year' ? 12 * n : n)); }
-  function pend(s, k){ return addDays(pnext(s, k), -1); }   // dernier jour de la période
-  function plist(s, td){   // périodes de la série, du début de la configuration à aujourd'hui (jamais dans le futur)
-    var out = [], k = pkey(s, s.from), last = pkey(s, td), end = s.to ? pkey(s, s.to) : last;
-    if(end > last) end = last;
-    while(k <= end && out.length < 20000){ out.push(k); k = pnext(s, k); }
-    return out;
-  }
-  function plabel(s, k){
-    var u = s.rp.unit, o = {day:'numeric', month:'short'};
-    if(+k.slice(0, 4) !== new Date().getFullYear()) o.year = 'numeric';
-    if(s.rp.every === 1){
-      if(u === 'day'){ o.weekday = 'short'; return dfmt(k, o); }
-      if(u === 'week') return 'Sem. du ' + dfmt(k, o);
-      if(u === 'month') return dfmt(k, {month:'long', year:'numeric'});
-      return k.slice(0, 4);
-    }
-    return dfmt(k, o) + ' → ' + dfmt(pend(s, k), o);
-  }
-
-  /* ---- Migration / normalisation : tolérante et idempotente (complète ce qui manque, conserve les propriétés inconnues) ---- */
+  /* ---- Migration / normalisation : tolérante et idempotente (complète ce qui manque, ne supprime rien d'utile) ---- */
   function normRecs(recs, cfg){
     var out = {};
     if(isObj(recs)) Object.keys(recs).forEach(function(k){
@@ -1341,24 +1199,21 @@ window.bootHistory = function(){
     return out;
   }
   function firstKey(recs){ return Object.keys(recs).filter(function(k){ return DKEY.test(k); }).sort()[0]; }
-  function normCfg(i){   // champs communs à une ligne et à une ancienne configuration ; frequency 'daily' / 'weekly' → repeat
-    var c = {repeat: repOf(i), trackingMode: i.trackingMode === 'quantity' ? 'quantity' : 'check', target: okNum(i.target) ? i.target : null, unit: str(i.unit, ''),
-      targetLog: (Array.isArray(i.targetLog) ? i.targetLog : []).filter(function(t){ return isObj(t) && DKEY.test(t.until); })
-        .map(function(t){ return Object.assign({}, t, {target: okNum(t.target) ? t.target : null, unit: str(t.unit, '')}); })};
-    if(c.trackingMode === 'quantity') c.quantityKind = i.quantityKind === 'time' ? 'time' : 'number';
-    return c;
-  }
   function normGoal(i, k){
-    var g = withFreq(Object.assign({}, i, normCfg(i), {id: str(i.id, '') || uid(), name: str(i.name, 'Sans nom'),
+    var g = Object.assign({}, i, {id: str(i.id, '') || uid(), name: str(i.name, 'Sans nom'), frequency: i.frequency === 'weekly' ? 'weekly' : 'daily',
+      trackingMode: i.trackingMode === 'quantity' ? 'quantity' : 'check', target: okNum(i.target) ? i.target : null, unit: str(i.unit, ''),
       archivedAt: typeof i.archivedAt === 'string' && !isNaN(Date.parse(i.archivedAt)) ? i.archivedAt : null,
       createdAt: iso(i.createdAt), updatedAt: iso(i.updatedAt), order: Number.isFinite(i.order) ? i.order : k,
-      pauses: (Array.isArray(i.pauses) ? i.pauses : []).filter(function(p){ return isObj(p) && DKEY.test(p.from) && (p.to == null || DKEY.test(p.to)); })}));
+      pauses: (Array.isArray(i.pauses) ? i.pauses : []).filter(function(p){ return isObj(p) && DKEY.test(p.from) && (p.to == null || DKEY.test(p.to)); })});
     g.active = !g.archivedAt;
+    if(g.trackingMode === 'quantity') g.quantityKind = i.quantityKind === 'time' ? 'time' : 'number';   // propriété facultative : absente (anciennes données) = nombre
     g.records = normRecs(i.records, g);
     var today = dkey(new Date()), created = dkey(new Date(g.createdAt)), first = firstKey(g.records);
     g.since = DKEY.test(i.since) ? i.since : (first && first < created ? first : created);
     g.legacy = (Array.isArray(i.legacy) ? i.legacy : []).filter(isObj).map(function(l){
-      var s = withFreq(Object.assign({}, l, normCfg(l)));
+      var s = Object.assign({}, l, {frequency: l.frequency === 'weekly' ? 'weekly' : 'daily', trackingMode: l.trackingMode === 'quantity' ? 'quantity' : 'check',
+        target: okNum(l.target) ? l.target : null, unit: str(l.unit, '')});
+      if(s.trackingMode === 'quantity') s.quantityKind = l.quantityKind === 'time' ? 'time' : 'number';
       s.records = normRecs(l.records, s);
       s.to = DKEY.test(l.to) ? l.to : today;
       s.from = DKEY.test(l.from) ? l.from : (firstKey(s.records) || s.to);
@@ -1371,227 +1226,119 @@ window.bootHistory = function(){
     return Object.assign({}, i, {id: str(i.id, '') || uid(), text: str(i.text, ''), checked: i.checked === true,
       createdAt: iso(i.createdAt), updatedAt: iso(i.updatedAt), order: Number.isFinite(i.order) ? i.order : k});
   }
-  function normOpt(o){ return Object.assign({}, o, {id: str(o.id, '') || uid(), name: str(o.name, ''), color: HEX.test(o.color) ? o.color : COLORS[0]}); }
-  function normCol(c, k){
-    return Object.assign({}, c, {id: str(c.id, '') || uid(), name: str(c.name, '') || 'Colonne', type: has(COLT, c.type) ? c.type : 'text',
-      order: Number.isFinite(c.order) ? c.order : k, options: (Array.isArray(c.options) ? c.options : []).filter(isObj).map(normOpt)});
-  }
-  function normRow(r, k){   // les valeurs sont conservées telles quelles (une valeur incompatible reste affichée comme « valeur d'origine »)
-    return Object.assign({}, r, {id: str(r.id, '') || uid(), values: isObj(r.values) ? Object.assign({}, r.values) : {},
-      createdAt: iso(r.createdAt), updatedAt: iso(r.updatedAt), order: Number.isFinite(r.order) ? r.order : k,
-      log: (Array.isArray(r.log) ? r.log : []).filter(isObj)});
-  }
   function normCard(c, k){
-    var out = Object.assign({}, c, {id: str(c.id, '') || uid(), title: str(c.title, 'Sans titre'), icon: str(c.icon, '') || '✅',
+    return Object.assign({}, c, {id: str(c.id, '') || uid(), title: str(c.title, 'Sans titre'), icon: str(c.icon, '') || '✅',
       color: HEX.test(c.color) ? c.color : COLORS[0], createdAt: iso(c.createdAt), updatedAt: iso(c.updatedAt),
       order: Number.isFinite(c.order) ? c.order : k,
       type: TYPES.indexOf(c.type) >= 0 ? c.type : 'standard',   // anciennes cartes : standard (jamais déduit du titre)
       items: (Array.isArray(c.items) ? c.items : []).filter(isObj).map(normItem),
       goals: (Array.isArray(c.goals) ? c.goals : []).filter(isObj).map(normGoal)});
-    if(out.type === 'custom'){
-      out.columns = (Array.isArray(c.columns) ? c.columns : []).filter(isObj).map(normCol);
-      out.rows = (Array.isArray(c.rows) ? c.rows : []).filter(isObj).map(normRow);
-    }
-    return out;
   }
   function normalize(chk){
     var src = isObj(chk) ? chk : {};
     var out = Object.assign({}, src, {cards: (Array.isArray(src.cards) ? src.cards : []).filter(isObj).map(normCard)});
-    if(isObj(src.defaultCards)) out.defaultCards = Object.assign({}, src.defaultCards);   // drapeaux « cartes par défaut déjà créées » : conservés tels quels
-    else delete out.defaultCards;
+    if(isObj(src.defaultCards)) out.defaultCards = Object.assign({}, src.defaultCards);   // drapeau « cartes par défaut déjà créées » : conservé tel quel
+    else delete out.defaultCards;                                                          // absent (anciennes données) ou illisible : rien n'est inventé ici
     return out;
   }
   window.ChkModel = {normalize: normalize};   // fonction pure, réutilisée par la couche Supabase (import, données en ligne)
 
   /* Nouvelle ligne récurrente : vide, à la date du jour (aucun historique inventé) */
-  function newLine(name, rp, kind, target, unit, order){
-    var g = withFreq({id: uid(), name: name, repeat: {every: rp.every, unit: rp.unit}, trackingMode: kind === 'check' ? 'check' : 'quantity',
+  function newLine(name, freq, kind, target, unit, order){
+    var g = {id: uid(), name: name, frequency: freq === 'weekly' ? 'weekly' : 'daily', trackingMode: kind === 'check' ? 'check' : 'quantity',
       target: kind === 'check' ? null : target, unit: kind === 'time' ? 'min' : (kind === 'number' ? unit : ''),
       active: true, archivedAt: null, createdAt: now(), updatedAt: now(), order: order,
-      since: dkey(new Date()), pauses: [], legacy: [], records: {}, targetLog: []});
+      since: dkey(new Date()), pauses: [], legacy: [], records: {}};
     if(kind !== 'check') g.quantityKind = kind;
     return g;
   }
-  /* Carte « Devoirs » : checklist paramétrable préconfigurée (les rôles et les identifiants d'options sont stables, les noms restent libres) */
-  function newDevoirs(order){
-    function col(name, type, role, i, extra){ return Object.assign({id: uid(), name: name, type: type, role: role, order: i, options: []}, extra || {}); }
-    return {id: uid(), type: 'custom', preset: 'devoirs', title: 'Devoirs', icon: '📚', color: '#8a4fd1', createdAt: now(), updatedAt: now(), order: order, items: [], goals: [], rows: [],
-      columns: [col('Fait', 'checkbox', 'done', 0), col('Matière', 'select', 'subject', 1, {quick: true}), col('Échéance', 'date', 'due', 2), col('Travail', 'text', 'desc', 3),
-        col('Type', 'select', 'kind', 4, {quick: true, def: 'travail', options: [{id: 'controle', name: 'Contrôle', color: '#d1457a'}, {id: 'travail', name: 'Travail à faire', color: '#2f6fdb'}]})]};
-  }
 
   /* ---- Moteur des lignes récurrentes ----
-     Une « série » = une configuration (répétition + type d'objectif) d'une ligne : les anciennes (legacy), puis l'actuelle. */
-  function mkS(g, c, rec, from, to, old){ return {g:g, rp:c.repeat, m:c.trackingMode, kind:kindOf(c), target:c.target, unit:c.unit, rec:rec, from:from, to:to, old:old, tl:c.targetLog || []}; }
+     Une « série » = une configuration (fréquence + type d'objectif) d'une ligne : les anciennes (legacy), puis l'actuelle. */
   function series(g){
-    var out = g.legacy.map(function(l){ return mkS(g, l, l.records, l.from, l.to, true); });
-    out.push(mkS(g, g, g.records, g.since, null, false));
+    var out = g.legacy.map(function(l){ return {g:g, f:l.frequency, m:l.trackingMode, kind:kindOf(l), target:l.target, unit:l.unit, rec:l.records, from:l.from, to:l.to, old:true}; });
+    out.push({g:g, f:g.frequency, m:g.trackingMode, kind:kindOf(g), target:g.target, unit:g.unit, rec:g.records, from:g.since, to:null, old:false});
     return out;
   }
-  function curS(g){ return mkS(g, g, g.records, g.since, null, false); }
+  function curS(g){ var s = series(g); return s[s.length - 1]; }
   function expected(s, k){   // période attendue = ligne active (ni archivée, ni reconfigurée) au dernier jour de la période
-    var e = pend(s, k);
+    var e = pend(s.f, k);
     if(s.to && e >= s.to) return false;
     return !s.g.pauses.some(function(p){ return e >= p.from && (!p.to || e < p.to); });
   }
-  function past(s, k, f){   // objectif / unité en vigueur pour la période k : figé dans l'enregistrement, sinon journal des anciens objectifs, sinon actuel
-    for(var i = 0; i < s.tl.length; i++) if(k < s.tl[i].until) return s.tl[i][f];
-    return s[f];
+  function plist(s, today){   // périodes de la série, du début de la configuration à aujourd'hui (jamais avant, jamais dans le futur)
+    var out = [], step = s.f === 'weekly' ? 7 : 1, k = pkeyF(s.f, pdate(s.from)), last = pkeyF(s.f, today), end = s.to ? pkeyF(s.f, pdate(s.to)) : last;
+    if(end > last) end = last;
+    while(k <= end && out.length < 20000){ out.push(k); k = addDays(k, step); }
+    return out;
   }
-  function tgt(s, k){ var r = s.rec[k]; return r && ('targetAtTime' in r) ? r.targetAtTime : past(s, k, 'target'); }
-  function unitOf(s, k){ var r = s.rec[k]; return r && typeof r.unitAtTime === 'string' ? r.unitAtTime : past(s, k, 'unit'); }
-  function res(s, k){   // true atteint · false non atteint · null non évaluable (temps / nombre sans objectif)
-    var r = s.rec[k];
-    if(s.m === 'quantity'){ var t = tgt(s, k); if(t == null) return null; return !!r && r.value != null && r.value >= t; }
+  function rTarget(s, r){ return r && ('targetAtTime' in r) ? r.targetAtTime : s.target; }   // objectif figé à l'époque de la saisie
+  function rUnit(s, r){ return r && typeof r.unitAtTime === 'string' ? r.unitAtTime : s.unit; }
+  function res(s, r){   // true atteint · false non atteint · null non évaluable (temps / nombre sans objectif)
+    if(s.m === 'quantity'){ var t = rTarget(s, r); if(t == null) return null; return !!r && r.value != null && r.value >= t; }
     return !!(r && r.checked);
   }
-  function qtxt(s, k, v){ if(s.kind === 'time') return fmtMin(v); var u = unitOf(s, k); return num(v) + (u ? ' ' + u : ''); }
-  function ratio(s, k, v){   // « 15 min / 20 min » ou « 25 / 30 répétitions »
-    var t = tgt(s, k);
+  function qtxt(s, r, v){   // valeur lisible : temps (« 1 h 05 ») ou nombre + unité de l'époque
+    if(s.kind === 'time') return fmtMin(v);
+    var u = rUnit(s, r); return num(v) + (u ? ' ' + u : '');
+  }
+  function ratio(s, r, v, t){   // « 15 min / 20 min » ou « 25 / 30 répétitions »
     if(s.kind === 'time') return fmtMin(v) + (t != null ? ' / ' + fmtMin(t) : '');
-    var u = unitOf(s, k); return num(v) + (t != null ? ' / ' + num(t) : '') + (u ? ' ' + u : '');
+    var u = rUnit(s, r); return num(v) + (t != null ? ' / ' + num(t) : '') + (u ? ' ' + u : '');
   }
-  function cfgLbl(rp, kind){ return repLbl(rp) + ' · ' + KIND[kind]; }
-  function objTxt(g){
+  function plabel(s, k){
+    var d = pdate(k), o = {day:'numeric', month:'short'};
+    if(d.getFullYear() !== new Date().getFullYear()) o.year = 'numeric';
+    if(s.f === 'weekly') return 'Sem. du ' + d.toLocaleDateString('fr-FR', o);
+    o.weekday = 'short'; return d.toLocaleDateString('fr-FR', o);
+  }
+  function cfgLbl(f, kind){ return FREQ[f] + ' · ' + KIND[kind]; }
+  function objTxt(g){   // type d'objectif + objectif actuel
     var k = kindOf(g);
-    if(k === 'check') return 'Case';
-    if(k === 'time') return g.target != null ? fmtMin(g.target) : 'Temps libre';
-    return g.target != null ? num(g.target) + (g.unit ? ' ' + g.unit : '') : 'Nombre libre' + (g.unit ? ' (' + g.unit + ')' : '');
+    if(k === 'check') return 'Simple case';
+    if(k === 'time') return 'Temps · ' + (g.target != null ? 'objectif : ' + fmtMin(g.target) : 'sans objectif');
+    return 'Nombre · ' + (g.target != null ? 'objectif : ' + num(g.target) + (g.unit ? ' ' + g.unit : '') : 'sans objectif' + (g.unit ? ' (' + g.unit + ')' : ''));
   }
-  function describe(g){ return repLbl(g.repeat) + ' · ' + objTxt(g); }
-
-  /* ---- Valeurs des cartes paramétrables ---- */
-  function empty(v){ return v === undefined || v === null || v === ''; }
-  function optOf(col, id){ return (col.options || []).filter(function(o){ return o.id === id; })[0] || null; }
-  function fits(col, v){   // la valeur est-elle compatible avec le type de la colonne ?
-    switch(col.type){
-      case 'number': return Number.isFinite(v);
-      case 'checkbox': return typeof v === 'boolean';
-      case 'date': return typeof v === 'string' && DKEY.test(v);
-      case 'select': return typeof v === 'string' && !!optOf(col, v);
-      case 'multi': return Array.isArray(v) && v.every(function(x){ return typeof x === 'string'; });
-      case 'repeat': return isRep(v);
-      case 'priority': return v === 1 || v === 2 || v === 3;
-    }
-    return typeof v === 'string';
-  }
-  function rawTxt(v){ var s = typeof v === 'string' ? v : JSON.stringify(v); return s.length > 60 ? s.slice(0, 60) + '…' : s; }
-  function toText(v, col){   // valeur lisible
-    if(empty(v)) return '';
-    if(!fits(col, v)) return typeof v === 'string' ? v : JSON.stringify(v);
-    switch(col.type){
-      case 'checkbox': return v ? 'Oui' : 'Non';
-      case 'select': return optOf(col, v).name;
-      case 'multi': return v.map(function(id){ var o = optOf(col, id); return o ? o.name : id; }).join(', ');
-      case 'repeat': return repLbl(v);
-      case 'priority': return PRIO[v].name;
-    }
-    return String(v);
-  }
-  function findOpt(col, name, create){   // option par nom (insensible à la casse) ; créée à la volée si demandé — la clé reste l'identifiant
-    name = String(name).trim().slice(0, 40); if(!name) return null;
-    var o = col.options.filter(function(x){ return x.name.toLowerCase() === name.toLowerCase(); })[0];
-    if(!o && create){ o = {id: uid(), name: name, color: PAL[col.options.length % PAL.length]}; col.options.push(o); }
-    return o ? o.id : null;
-  }
-  function convert(v, from, to){   // changement de type : convertit si possible, sinon renvoie la valeur d'origine (jamais de perte silencieuse)
-    if(empty(v) || !fits(from, v)) return v;
-    var f = from.type, t = to.type, s = toText(v, from), m, raw = (f === 'select' || f === 'multi') ? s : v;
-    if(f === t) return v;
-    if(t === 'text' || t === 'longtext') return s;
-    if(t === 'link') return raw;
-    if(t === 'number'){
-      if(f === 'checkbox') return v ? 1 : 0;
-      if(f === 'priority') return v;
-      m = s.replace(/\s/g, '').replace(',', '.');
-      return /^-?\d+(\.\d+)?$/.test(m) ? parseFloat(m) : raw;
-    }
-    if(t === 'checkbox'){
-      if(f === 'number') return v > 0;
-      if(/^(oui|vrai|true|1|x|✓|fait)$/i.test(s.trim())) return true;
-      if(/^(non|faux|false|0)$/i.test(s.trim())) return false;
-      return raw;
-    }
-    if(t === 'date'){
-      if(DKEY.test(s)) return s;
-      m = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/.exec(s.trim());
-      if(m){ var d = new Date(+m[3], +m[2] - 1, +m[1]); if(d.getMonth() === +m[2] - 1) return dkey(d); }
-      return raw;
-    }
-    if(t === 'select'){
-      if(f === 'multi') return v.length === 1 ? v[0] : (v.length ? raw : undefined);
-      return findOpt(to, s, true) || raw;
-    }
-    if(t === 'multi'){
-      if(f === 'select') return [v];
-      m = s.split(/[,;]/).map(function(x){ return findOpt(to, x, true); }).filter(Boolean);
-      return m.length ? m : raw;
-    }
-    if(t === 'priority'){
-      if(f === 'number') return (v === 1 || v === 2 || v === 3) ? v : raw;
-      m = s.trim().toLowerCase();
-      return has(PRMAP, m) ? PRMAP[m] : raw;
-    }
-    return raw;   // répétition : aucune conversion possible
-  }
-  function safeUrl(s){   // seuls les liens http(s) sont cliquables
-    try{ var u = new URL(String(s).trim()); return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : null; }catch(e){ return null; }
-  }
+  function describe(g){ return FREQ[g.frequency] + (g.frequency === 'weekly' ? ' (le lundi)' : '') + ' · ' + objTxt(g); }
 
 window.bootChecklists = function(){
   var KEY = window.CloudSync.keys.chk, $ = function(id){ return document.getElementById(id); };
-  var data = normalize(null), cur = null, moved = null, focusLine = null, refocus = null, views = {};
+  var data = normalize(null), cur = null, moved = null, focusLine = null;
 
   function el(tag, cls, txt){ var e = document.createElement(tag); if(cls) e.className = cls; if(txt !== undefined) e.textContent = txt; return e; }
   function btn(txt, fn, cls){ var b = el('button', cls || '', txt); b.type = 'button'; b.onclick = fn; return b; }
-  function ibtn(icon, label, fn, cls){   // bouton icône : libellé en title (survol), bulle au focus clavier, aria-label
-    var b = btn(icon, fn, 'ib' + (cls ? ' ' + cls : '')); b.title = label; b.setAttribute('aria-label', label); b.dataset.lbl = label; return b;
-  }
-  function each(list, fn){ Array.prototype.forEach.call(list, fn); }
-  function today(){ return dkey(new Date()); }
-  function maxOrder(list){ return list.reduce(function(m, x){ return Math.max(m, x.order); }, -1) + 1; }
-  function findData(root, name, val){ var hit = null; each(root.querySelectorAll('[data-' + name + ']'), function(x){ if(!hit && x.dataset[name] === val && !x.disabled) hit = x; }); return hit; }
-  function opt(sel, value, label){ var o = el('option', '', label); o.value = value; sel.appendChild(o); return o; }
   function save(){   // écriture locale ; la synchro Supabase suit (debounce existant)
     try{ localStorage.setItem(KEY, JSON.stringify(data)); }
     catch(e){ $('acctMsg').textContent = 'Attention : enregistrement local impossible (stockage du navigateur plein ?). Exporte tes données sans attendre.'; }
   }
   /* Chargement + migration automatique du cache (écriture silencieuse : aucune synchro n'est déclenchée avant la fin du démarrage) */
   try{
-    var rawTxt0 = localStorage.getItem(KEY), parsed = JSON.parse(rawTxt0);
-    if(isObj(parsed)){ data = normalize(parsed); if(JSON.stringify(data) !== rawTxt0) save(); }
+    var rawTxt = localStorage.getItem(KEY), parsed = JSON.parse(rawTxt);
+    if(isObj(parsed)){ data = normalize(parsed); if(JSON.stringify(data) !== rawTxt) save(); }
   }catch(e){}
 
   function byId(id){ return data.cards.filter(function(c){ return c.id === id; })[0]; }
-  function touch(c){ c.updatedAt = now(); }
   function counts(c){ return {d: c.items.filter(function(i){ return i.checked; }).length, n: c.items.length}; }
+  function touch(c){ c.updatedAt = now(); }
   function goalProg(c){   // lignes actives : périodes en cours atteintes / évaluables
-    var n = 0, d = 0, td = today();
+    var n = 0, d = 0, t = new Date();
     c.goals.forEach(function(g){
       if(g.archivedAt) return;
-      var s = curS(g), r = res(s, pkey(s, td));
+      var s = curS(g), r = res(s, s.rec[pkeyF(s.f, t)]);
       if(r !== null){ n++; if(r) d++; }
     });
     return {d: d, n: n};
   }
-  function roles(c){   // colonnes « métier » d'une carte paramétrable, retrouvées par rôle puis par type (jamais par nom)
-    var cols = c.columns.slice().sort(byOrder), o = {cols: cols};
-    function first(t){ return cols.filter(function(k){ return k.type === t; })[0] || null; }
-    function pick(role, t){ return cols.filter(function(k){ return k.role === role && k.type === t; })[0] || null; }
-    o.done = pick('done', 'checkbox') || first('checkbox');
-    o.due = pick('due', 'date') || first('date');
-    o.repeat = first('repeat');
-    o.subject = pick('subject', 'select'); o.kind = pick('kind', 'select');
-    o.desc = cols.filter(function(k){ return k.role === 'desc'; })[0] || first('text') || first('longtext');
-    return o;
+  function prog(c){ return c.type === 'standard' ? counts(c) : goalProg(c); }
+  function setRec(s, key, patch){   // crée ou corrige l'enregistrement d'une période (actuelle ou ancienne)
+    var r = s.rec[key];
+    if(!r){ r = s.rec[key] = {value: null, checked: false}; if(s.m === 'quantity'){ r.targetAtTime = s.target; r.unitAtTime = s.unit; } }   // objectif en vigueur figé à la première saisie
+    Object.assign(r, patch, {updatedAt: now()});
+    if(s.m === 'quantity') r.checked = res(s, r) === true;   // case automatique : cochée si réalisé >= objectif
+    s.g.updatedAt = now();
+    data.cards.forEach(function(c){ if(c.goals.indexOf(s.g) >= 0) touch(c); });
+    save();
   }
-  function prog(c){
-    if(c.type === 'standard') return counts(c);
-    if(c.type !== 'custom') return goalProg(c);
-    var d = roles(c).done;
-    return {d: d ? c.rows.filter(function(r){ return r.values[d.id] === true; }).length : 0, n: c.rows.length, plain: !d};
-  }
-  function isDevoirs(c){ return c.type === 'custom' && c.preset === 'devoirs'; }
 
   /* Saisie d'une durée : heures + minutes (valeur en minutes ; les deux champs vides = aucune valeur) */
   function timeFields(label){
@@ -1618,43 +1365,24 @@ window.bootChecklists = function(){
       }
     };
   }
-  /* Champ « Répétition » partagé : « Ne pas répéter / Répéter tous les [X] [jours | semaines | mois | ans] » */
-  function repeatField(allowNone){
-    var wrap = el('span', 'rep'), mode = el('select'), n = el('input'), u = el('select');
-    wrap.setAttribute('role', 'group'); wrap.setAttribute('aria-label', 'Répétition');
-    opt(mode, '0', 'Ne pas répéter'); opt(mode, '1', 'Répéter tous les'); mode.setAttribute('aria-label', 'Répétition');
-    n.type = 'number'; n.min = '1'; n.max = '999'; n.step = '1'; n.inputMode = 'numeric'; n.setAttribute('aria-label', 'Intervalle de répétition');
-    UNITS.forEach(function(x){ opt(u, x, UL[x][1]); }); u.setAttribute('aria-label', 'Unité de répétition');
-    wrap.appendChild(allowNone ? mode : el('span', '', 'Répéter tous les')); wrap.appendChild(n); wrap.appendChild(u);
-    function sync(){ var off = allowNone && mode.value === '0'; n.hidden = off; u.hidden = off; }
-    mode.onchange = sync;
-    return {el: wrap, focus: function(){ (allowNone ? mode : n).focus(); },
-      get: function(){
-        if(allowNone && mode.value === '0') return null;
-        var v = Math.round(parseFloat(n.value));
-        return {every: v >= 1 ? Math.min(v, 999) : 1, unit: UNITS.indexOf(u.value) >= 0 ? u.value : 'day'};
-      },
-      set: function(r){ var ok = isRep(r); mode.value = ok || !allowNone ? '1' : '0'; n.value = ok ? r.every : 1; u.value = ok ? r.unit : 'week'; sync(); }};
-  }
 
   function render(){
-    if(cur && !byId(cur)) cur = null;
     $('ckGrid').hidden = !!cur; $('ckDetail').hidden = !cur;
-    if(cur) renderDetail(); else renderGrid();
+    if(cur && byId(cur)) renderDetail(); else { cur = null; $('ckGrid').hidden = false; $('ckDetail').hidden = true; renderGrid(); }
   }
 
   /* ---- Grille de cartes ---- */
   function renderGrid(){
     var box = $('ckCards'); box.innerHTML = '';
-    if(!data.cards.length){ box.appendChild(el('p', 'hint empty', 'Aucune checklist. Crée la première avec « + Nouvelle checklist ».')); return; }
+    if(!data.cards.length){ box.appendChild(el('p', 'hint', 'Aucune checklist. Crée la première avec « + Nouvelle checklist ».')); return; }
     data.cards.slice().sort(byOrder).forEach(function(c){
       var k = prog(c), card = el('article', 'ck-card');
       card.style.setProperty('--c', c.color);
       var open = el('button', 'ck-open'); open.type = 'button'; open.setAttribute('aria-label', 'Ouvrir la checklist ' + c.title);
       open.appendChild(el('span', 'ck-ico', c.icon)); open.appendChild(el('span', 'ck-title', c.title));
-      open.appendChild(el('span', 'ck-count', c.type === 'standard' ? k.d + ' / ' + k.n : c.type === 'custom' ? (k.plain ? k.n + ' ligne(s)' : k.d + ' / ' + k.n + ' fait(s)') : 'En cours : ' + k.d + ' / ' + k.n));
+      open.appendChild(el('span', 'ck-count', (c.type === 'standard' ? '' : TYPELBL[c.type] + ' · en cours : ') + k.d + ' / ' + k.n));
       open.onclick = function(){ cur = c.id; render(); window.scrollTo(0, 0); };
-      var pr = el('div', 'ck-prog'), bar = el('i'); bar.style.width = (k.n && !k.plain ? k.d / k.n * 100 : 0) + '%'; pr.appendChild(bar);
+      var pr = el('div', 'ck-prog'), bar = el('i'); bar.style.width = (k.n ? k.d / k.n * 100 : 0) + '%'; pr.appendChild(bar);
       var btns = el('div', 'ck-btns');
       btns.appendChild(btn('Modifier', function(){ openDlg(c); }));
       btns.appendChild(btn('Supprimer', function(){ delCard(c); }, 'danger'));
