@@ -201,7 +201,7 @@ body:not(.authed) main{display:none}
 .ck-emoji button.on,.ck-sw button.on{outline:3px solid var(--accent);outline-offset:1px}
 .subtabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
 .subtabs button.on{background:var(--accent);border-color:var(--accent);color:var(--card)}
-/* Objectifs récurrents (cartes Sport / Ménage) */
+/* Lignes récurrentes (cartes Sport / Ménage) */
 .ck-goal{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:8px}
 .ck-goal .meta{color:var(--muted);font-size:.85rem}
 .ck-goal .ck-btns{margin-top:6px;align-items:center}
@@ -209,7 +209,17 @@ body:not(.authed) main{display:none}
 .ck-per{flex-wrap:wrap}
 .ck-lab{display:inline-flex;align-items:center;gap:8px;min-width:0;cursor:pointer}
 .ck-lab input[type=number]{width:92px}
+.ck-grp{cursor:default;flex-wrap:wrap}
 .ck-hist{margin-top:6px}
+/* Titre de ligne cliquable (ouvre le dialogue de réglage) */
+.ck-line{all:unset;cursor:pointer;font-weight:700;border-radius:6px;overflow-wrap:anywhere;text-decoration:underline dotted;text-underline-offset:3px}
+.ck-line::after{content:" ✎";font-weight:400;color:var(--muted)}
+.ck-line:hover{color:var(--accent)}
+.ck-line:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+/* Case cochée automatiquement (objectif temps / nombre atteint) */
+.ck-auto{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;flex:none;border:2px solid var(--muted);border-radius:5px;font-weight:700;line-height:1;color:transparent;user-select:none}
+.ck-auto.on{background:var(--c,var(--accent));border-color:var(--c,var(--accent));color:#fff}
+.ck-auto[hidden]{display:none}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
@@ -370,7 +380,7 @@ body:not(.authed) main{display:none}
 
   <div id="tip" role="tooltip" hidden></div>
 
-  <dialog id="wDialog">
+  <dialog id="wDialog" aria-labelledby="wTitle">
     <h2 id="wTitle"></h2>
     <label class="field" style="margin-bottom:10px"><span>Lundi de la semaine</span><input type="date" id="wDate" style="font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)"></label>
     <label class="chip" style="display:flex;margin-bottom:10px"><input type="checkbox" id="wSchool"><span>Semaine école (35 h)</span></label>
@@ -401,8 +411,8 @@ body:not(.authed) main{display:none}
   <p class="hint" id="authMsg" role="alert"></p>
 </section>
 <div id="syncChip" role="status">Vérification de la session…</div>
-<dialog id="cloudDialog"><h2 id="cdTitle"></h2><p id="cdText"></p><div class="actions" id="cdBtns"></div></dialog>
-<dialog id="ckDialog">
+<dialog id="cloudDialog" aria-labelledby="cdTitle"><h2 id="cdTitle"></h2><p id="cdText"></p><div class="actions" id="cdBtns"></div></dialog>
+<dialog id="ckDialog" aria-labelledby="ckdTitle">
   <h2 id="ckdTitle"></h2>
   <form id="ckForm">
     <label class="ckl">Nom<input type="text" id="ckdName" maxlength="60"></label>
@@ -414,18 +424,22 @@ body:not(.authed) main{display:none}
   </form>
 </dialog>
 
-<dialog id="gDialog">
+<!-- Dialogue d'une ligne (cartes Sport et Ménage) : titre, réinitialisation, type d'objectif, objectif -->
+<dialog id="gDialog" aria-labelledby="gdTitle">
   <h2 id="gdTitle"></h2>
-  <form id="gdForm">
-    <label class="ckl">Nom<input type="text" id="gdName" maxlength="60"></label>
-    <label class="ckl">Fréquence<select id="gdFreq"><option value="daily">Quotidienne</option><option value="weekly">Hebdomadaire (lundi → dimanche)</option></select></label>
-    <div id="gdSport">
-      <label class="ckl">Mode de suivi<select id="gdMode"><option value="check">Simple validation (case à cocher)</option><option value="quantity">Quantité numérique</option></select></label>
-      <div id="gdQty">
-        <label class="ckl">Objectif numérique (facultatif)<input type="number" id="gdTarget" min="0" step="any" inputmode="decimal"></label>
-        <label class="ckl">Unité (facultatif)<input type="text" id="gdUnit" maxlength="20" placeholder="répétitions, km, min…"></label>
-      </div>
+  <form id="gdForm" novalidate>
+    <label class="ckl">Titre<input type="text" id="gdName" maxlength="60" autocomplete="off"></label>
+    <label class="ckl">Réinitialisation de la case<select id="gdFreq"><option value="daily">Chaque jour</option><option value="weekly">Chaque semaine (le lundi)</option></select></label>
+    <label class="ckl">Type d’objectif<select id="gdMode"><option value="check">Simple case à cocher</option><option value="time">Temps</option><option value="number">Nombre</option></select></label>
+    <div id="gdTimeBox" hidden>
+      <div class="ckl"><span>Objectif de temps par période</span><span id="gdTimeHost"></span></div>
     </div>
+    <div id="gdNumBox" hidden>
+      <label class="ckl">Objectif (nombre) par période<input type="number" id="gdTarget" min="0" step="any" inputmode="decimal"></label>
+      <label class="ckl">Unité (facultative)<input type="text" id="gdUnit" maxlength="20" placeholder="répétitions, séances, km…" autocomplete="off"></label>
+    </div>
+    <p class="hint" id="gdGoalHint"></p>
+    <p class="hint" id="gdKeep">ℹ️ Quand la case se réinitialise (chaque jour ou chaque lundi), rien n’est effacé : l’historique est conservé pour les statistiques.</p>
     <p class="hint" id="gdErr" style="color:var(--warn)" role="alert"></p>
     <div class="actions"><button type="submit">Enregistrer</button><button type="button" id="gdCancel">Annuler</button></div>
   </form>
@@ -1111,12 +1125,15 @@ window.bootHistory = function(){
 /* ==========================================================================
    Onglet Checklists (cartes Standard / Sport / Ménage) et Dashboards Sport / Ménage.
    Données (clé window.CloudSync.keys.chk, synchronisées par la couche Supabase) :
-   {cards:[{id,type,title,icon,color,createdAt,updatedAt,order,
+   {defaultCards:{sport:true,menage:true},                                       // facultatif : cartes par défaut déjà créées (une seule fois, jamais recréées)
+    cards:[{id,type,title,icon,color,createdAt,updatedAt,order,
      items:[{id,text,checked,createdAt,updatedAt,order}],                        // lignes standard
-     goals:[{id,name,frequency,trackingMode,target,unit,active,archivedAt,createdAt,updatedAt,order,
+     goals:[{id,name,frequency,trackingMode,quantityKind,target,unit,active,archivedAt,createdAt,updatedAt,order,
+             // frequency : 'daily' | 'weekly' (réinitialisation de la case) ; trackingMode : 'check' | 'quantity'
+             // quantityKind (FACULTATIF, seulement si trackingMode = 'quantity') : 'time' (target et valeurs en minutes) | 'number' ; absent = 'number'
              since,                                                              // jour local (YYYY-MM-DD) de début de la configuration actuelle
              pauses:[{from,to}],                                                 // intervalles d'archivage (jours locaux)
-             legacy:[{frequency,trackingMode,target,unit,from,to,records}],      // anciennes configurations, conservées telles quelles
+             legacy:[{frequency,trackingMode,quantityKind,target,unit,from,to,records}],   // anciennes configurations, conservées telles quelles
              records:{'YYYY-MM-DD':{value,checked,targetAtTime,unitAtTime,updatedAt}}}]}]}
    Clé de période : jour local (quotidien) ou lundi local (hebdomadaire). L'historique est relié à goal.id, jamais au nom.
    Tous les textes sont insérés via textContent / value : jamais d'innerHTML avec des données utilisateur.
@@ -1127,9 +1144,20 @@ window.bootHistory = function(){
   var COLORS = ['#1f6f5c','#2f6fdb','#8a4fd1','#d1457a','#d9822b','#c9a227','#3a9d5d','#5f6f6a'];
   var HEX = /^#[0-9a-fA-F]{6}$/, DKEY = /^\d{4}-\d{2}-\d{2}$/;
   var TYPES = ['standard','sport','menage'], TYPELBL = {standard:'Standard', sport:'Sport', menage:'Ménage'};
-  var FREQ = {daily:'Quotidien', weekly:'Hebdomadaire'}, MODE = {check:'case à cocher', quantity:'quantité'};
+  var FREQ = {daily:'Chaque jour', weekly:'Chaque semaine'};
+  var KINDS = ['check','time','number'], KIND = {check:'simple case', time:'temps', number:'nombre'};
+  /* Cartes créées UNE SEULE FOIS par défaut (voir ensureDefaults). Ce sont de simples données de départ, modifiables ensuite :
+     les Dashboards ne lisent jamais cette liste. Ligne = [titre, fréquence, type d'objectif, objectif, unité]. */
+  var DEFAULT_CARDS = [
+    {type:'sport', title:'Sport', icon:'🏋️', color:'#2f6fdb', lines:[
+      ['Courir','weekly','time',20,''], ['Marche','daily','time',30,''], ['Pompes','daily','number',30,'répétitions'],
+      ['Étirements','daily','check',null,''], ['Séances de sport','weekly','number',3,'séances']]},
+    {type:'menage', title:'Ménage', icon:'🧹', color:'#3a9d5d', lines:[
+      ['Vaisselle','daily','check',null,''], ['Ranger','daily','time',10,''], ['Aspirateur','weekly','check',null,''],
+      ['Lessive','weekly','number',2,''], ['Salle de bain','weekly','check',null,''], ['Changer les draps','weekly','check',null,'']]}
+  ];
 
-  function now(){ return new Date().toISOString(); }
+  function now(){ return new Date().toISOString(); }   // horodatage technique uniquement (jamais utilisé pour calculer un jour ou une semaine)
   function uid(){
     if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
     return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);   // secours
@@ -1140,6 +1168,13 @@ window.bootHistory = function(){
   function okNum(v){ return Number.isFinite(v) && v >= 0; }
   function byOrder(a, b){ return a.order - b.order; }
   function num(v){ return String(Math.round(v * 100) / 100).replace('.', ','); }
+  function dict(){ return Object.create(null); }   // dictionnaire sans prototype (une unité nommée « constructor » ne pose aucun problème)
+  function fmtMin(v){   // durée en minutes → « 20 min », « 1 h 05 », « 2 h »
+    v = Math.round(v);
+    var h = Math.floor(v / 60), m = v % 60;
+    return h ? h + ' h' + (m ? ' ' + String(m).padStart(2, '0') : '') : m + ' min';
+  }
+  function kindOf(x){ return x.trackingMode !== 'quantity' ? 'check' : (x.quantityKind === 'time' ? 'time' : 'number'); }   // type d'objectif effectif
 
   /* ---- Périodes : dates LOCALES uniquement (jamais toISOString / UTC) ---- */
   function dkey(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
@@ -1171,12 +1206,14 @@ window.bootHistory = function(){
       createdAt: iso(i.createdAt), updatedAt: iso(i.updatedAt), order: Number.isFinite(i.order) ? i.order : k,
       pauses: (Array.isArray(i.pauses) ? i.pauses : []).filter(function(p){ return isObj(p) && DKEY.test(p.from) && (p.to == null || DKEY.test(p.to)); })});
     g.active = !g.archivedAt;
+    if(g.trackingMode === 'quantity') g.quantityKind = i.quantityKind === 'time' ? 'time' : 'number';   // propriété facultative : absente (anciennes données) = nombre
     g.records = normRecs(i.records, g);
     var today = dkey(new Date()), created = dkey(new Date(g.createdAt)), first = firstKey(g.records);
     g.since = DKEY.test(i.since) ? i.since : (first && first < created ? first : created);
     g.legacy = (Array.isArray(i.legacy) ? i.legacy : []).filter(isObj).map(function(l){
       var s = Object.assign({}, l, {frequency: l.frequency === 'weekly' ? 'weekly' : 'daily', trackingMode: l.trackingMode === 'quantity' ? 'quantity' : 'check',
         target: okNum(l.target) ? l.target : null, unit: str(l.unit, '')});
+      if(s.trackingMode === 'quantity') s.quantityKind = l.quantityKind === 'time' ? 'time' : 'number';
       s.records = normRecs(l.records, s);
       s.to = DKEY.test(l.to) ? l.to : today;
       s.from = DKEY.test(l.from) ? l.from : (firstKey(s.records) || s.to);
@@ -1199,19 +1236,32 @@ window.bootHistory = function(){
   }
   function normalize(chk){
     var src = isObj(chk) ? chk : {};
-    return Object.assign({}, src, {cards: (Array.isArray(src.cards) ? src.cards : []).filter(isObj).map(normCard)});
+    var out = Object.assign({}, src, {cards: (Array.isArray(src.cards) ? src.cards : []).filter(isObj).map(normCard)});
+    if(isObj(src.defaultCards)) out.defaultCards = Object.assign({}, src.defaultCards);   // drapeau « cartes par défaut déjà créées » : conservé tel quel
+    else delete out.defaultCards;                                                          // absent (anciennes données) ou illisible : rien n'est inventé ici
+    return out;
   }
   window.ChkModel = {normalize: normalize};   // fonction pure, réutilisée par la couche Supabase (import, données en ligne)
 
-  /* ---- Moteur des objectifs récurrents ----
-     Une « série » = une configuration (fréquence + mode) d'un objectif : les anciennes (legacy), puis l'actuelle. */
+  /* Nouvelle ligne récurrente : vide, à la date du jour (aucun historique inventé) */
+  function newLine(name, freq, kind, target, unit, order){
+    var g = {id: uid(), name: name, frequency: freq === 'weekly' ? 'weekly' : 'daily', trackingMode: kind === 'check' ? 'check' : 'quantity',
+      target: kind === 'check' ? null : target, unit: kind === 'time' ? 'min' : (kind === 'number' ? unit : ''),
+      active: true, archivedAt: null, createdAt: now(), updatedAt: now(), order: order,
+      since: dkey(new Date()), pauses: [], legacy: [], records: {}};
+    if(kind !== 'check') g.quantityKind = kind;
+    return g;
+  }
+
+  /* ---- Moteur des lignes récurrentes ----
+     Une « série » = une configuration (fréquence + type d'objectif) d'une ligne : les anciennes (legacy), puis l'actuelle. */
   function series(g){
-    var out = g.legacy.map(function(l){ return {g:g, f:l.frequency, m:l.trackingMode, target:l.target, unit:l.unit, rec:l.records, from:l.from, to:l.to, old:true}; });
-    out.push({g:g, f:g.frequency, m:g.trackingMode, target:g.target, unit:g.unit, rec:g.records, from:g.since, to:null, old:false});
+    var out = g.legacy.map(function(l){ return {g:g, f:l.frequency, m:l.trackingMode, kind:kindOf(l), target:l.target, unit:l.unit, rec:l.records, from:l.from, to:l.to, old:true}; });
+    out.push({g:g, f:g.frequency, m:g.trackingMode, kind:kindOf(g), target:g.target, unit:g.unit, rec:g.records, from:g.since, to:null, old:false});
     return out;
   }
   function curS(g){ var s = series(g); return s[s.length - 1]; }
-  function expected(s, k){   // période attendue = objectif actif (ni archivé, ni reconfiguré) au dernier jour de la période
+  function expected(s, k){   // période attendue = ligne active (ni archivée, ni reconfigurée) au dernier jour de la période
     var e = pend(s.f, k);
     if(s.to && e >= s.to) return false;
     return !s.g.pauses.some(function(p){ return e >= p.from && (!p.to || e < p.to); });
@@ -1222,11 +1272,19 @@ window.bootHistory = function(){
     while(k <= end && out.length < 20000){ out.push(k); k = addDays(k, step); }
     return out;
   }
-  function rTarget(s, r){ return r && ('targetAtTime' in r) ? r.targetAtTime : s.target; }   // cible de l'époque
+  function rTarget(s, r){ return r && ('targetAtTime' in r) ? r.targetAtTime : s.target; }   // objectif figé à l'époque de la saisie
   function rUnit(s, r){ return r && typeof r.unitAtTime === 'string' ? r.unitAtTime : s.unit; }
-  function res(s, r){   // true atteint · false non atteint · null non évaluable (quantité sans cible)
+  function res(s, r){   // true atteint · false non atteint · null non évaluable (temps / nombre sans objectif)
     if(s.m === 'quantity'){ var t = rTarget(s, r); if(t == null) return null; return !!r && r.value != null && r.value >= t; }
     return !!(r && r.checked);
+  }
+  function qtxt(s, r, v){   // valeur lisible : temps (« 1 h 05 ») ou nombre + unité de l'époque
+    if(s.kind === 'time') return fmtMin(v);
+    var u = rUnit(s, r); return num(v) + (u ? ' ' + u : '');
+  }
+  function ratio(s, r, v, t){   // « 15 min / 20 min » ou « 25 / 30 répétitions »
+    if(s.kind === 'time') return fmtMin(v) + (t != null ? ' / ' + fmtMin(t) : '');
+    var u = rUnit(s, r); return num(v) + (t != null ? ' / ' + num(t) : '') + (u ? ' ' + u : '');
   }
   function plabel(s, k){
     var d = pdate(k), o = {day:'numeric', month:'short'};
@@ -1234,16 +1292,18 @@ window.bootHistory = function(){
     if(s.f === 'weekly') return 'Sem. du ' + d.toLocaleDateString('fr-FR', o);
     o.weekday = 'short'; return d.toLocaleDateString('fr-FR', o);
   }
-  function describe(g){
-    var t = FREQ[g.frequency];
-    if(g.trackingMode === 'quantity') t += g.target != null ? ' · Objectif : ' + num(g.target) + (g.unit ? ' ' + g.unit : '') : ' · Quantité libre' + (g.unit ? ' (' + g.unit + ')' : '');
-    else t += ' · Case à cocher';
-    return t;
+  function cfgLbl(f, kind){ return FREQ[f] + ' · ' + KIND[kind]; }
+  function objTxt(g){   // type d'objectif + objectif actuel
+    var k = kindOf(g);
+    if(k === 'check') return 'Simple case';
+    if(k === 'time') return 'Temps · ' + (g.target != null ? 'objectif : ' + fmtMin(g.target) : 'sans objectif');
+    return 'Nombre · ' + (g.target != null ? 'objectif : ' + num(g.target) + (g.unit ? ' ' + g.unit : '') : 'sans objectif' + (g.unit ? ' (' + g.unit + ')' : ''));
   }
+  function describe(g){ return FREQ[g.frequency] + (g.frequency === 'weekly' ? ' (le lundi)' : '') + ' · ' + objTxt(g); }
 
 window.bootChecklists = function(){
   var KEY = window.CloudSync.keys.chk, $ = function(id){ return document.getElementById(id); };
-  var data = normalize(null), cur = null, moved = null;
+  var data = normalize(null), cur = null, moved = null, focusLine = null;
 
   function el(tag, cls, txt){ var e = document.createElement(tag); if(cls) e.className = cls; if(txt !== undefined) e.textContent = txt; return e; }
   function btn(txt, fn, cls){ var b = el('button', cls || '', txt); b.type = 'button'; b.onclick = fn; return b; }
@@ -1260,7 +1320,7 @@ window.bootChecklists = function(){
   function byId(id){ return data.cards.filter(function(c){ return c.id === id; })[0]; }
   function counts(c){ return {d: c.items.filter(function(i){ return i.checked; }).length, n: c.items.length}; }
   function touch(c){ c.updatedAt = now(); }
-  function goalProg(c){   // objectifs actifs : périodes en cours atteintes / évaluables
+  function goalProg(c){   // lignes actives : périodes en cours atteintes / évaluables
     var n = 0, d = 0, t = new Date();
     c.goals.forEach(function(g){
       if(g.archivedAt) return;
@@ -1272,12 +1332,38 @@ window.bootChecklists = function(){
   function prog(c){ return c.type === 'standard' ? counts(c) : goalProg(c); }
   function setRec(s, key, patch){   // crée ou corrige l'enregistrement d'une période (actuelle ou ancienne)
     var r = s.rec[key];
-    if(!r){ r = s.rec[key] = {value: null, checked: false}; if(s.m === 'quantity'){ r.targetAtTime = s.target; r.unitAtTime = s.unit; } }
+    if(!r){ r = s.rec[key] = {value: null, checked: false}; if(s.m === 'quantity'){ r.targetAtTime = s.target; r.unitAtTime = s.unit; } }   // objectif en vigueur figé à la première saisie
     Object.assign(r, patch, {updatedAt: now()});
-    if(s.m === 'quantity') r.checked = res(s, r) === true;
+    if(s.m === 'quantity') r.checked = res(s, r) === true;   // case automatique : cochée si réalisé >= objectif
     s.g.updatedAt = now();
     data.cards.forEach(function(c){ if(c.goals.indexOf(s.g) >= 0) touch(c); });
     save();
+  }
+
+  /* Saisie d'une durée : heures + minutes (valeur en minutes ; les deux champs vides = aucune valeur) */
+  function timeFields(label){
+    var wrap = el('span', 'hm'); wrap.setAttribute('role', 'group'); wrap.setAttribute('aria-label', label);
+    function mk(aria){
+      var i = el('input'); i.type = 'number'; i.min = '0'; i.step = '1'; i.inputMode = 'numeric';
+      i.setAttribute('aria-label', label + ' (' + aria + ')'); return i;
+    }
+    var h = mk('heures'), m = mk('minutes');
+    wrap.appendChild(h); wrap.appendChild(el('span', '', 'h')); wrap.appendChild(m); wrap.appendChild(el('span', '', 'min'));
+    return {
+      el: wrap,
+      read: function(){   // {bad:true} saisie illisible · {empty:true} champs vides · {v: minutes}
+        if((h.validity && h.validity.badInput) || (m.validity && m.validity.badInput)) return {bad: true};
+        var hs = h.value.trim(), ms = m.value.trim();
+        if(hs === '' && ms === '') return {empty: true};
+        var hv = hs === '' ? 0 : parseFloat(hs), mv = ms === '' ? 0 : parseFloat(ms);
+        if(!(hv >= 0) || !(mv >= 0)) return {bad: true};
+        return {v: Math.round(hv * 60 + mv)};
+      },
+      set: function(v){
+        if(v == null){ h.value = ''; m.value = ''; return; }
+        v = Math.round(v); h.value = Math.floor(v / 60) || ''; m.value = v % 60;
+      }
+    };
   }
 
   function render(){
@@ -1303,7 +1389,7 @@ window.bootChecklists = function(){
       card.appendChild(open); card.appendChild(pr); card.appendChild(btns); box.appendChild(card);
     });
   }
-  function delCard(c){
+  function delCard(c){   // une carte supprimée n'est jamais recréée : le drapeau defaultCards reste posé
     if(!confirm('Supprimer définitivement la checklist « ' + c.title + ' » et tout son contenu (lignes, objectifs récurrents et historiques) ?')) return;
     data.cards = data.cards.filter(function(x){ return x.id !== c.id; }); save(); render();
   }
@@ -1411,38 +1497,64 @@ window.bootChecklists = function(){
   $('ckdCancel').onclick = function(){ dlg.close(); };
   $('ckNew').onclick = function(){ openDlg(null); };
 
-  /* ---- Cartes Sport / Ménage : objectifs récurrents ---- */
-  function ctl(s, key, label, upd, off){   // saisie d'une période (actuelle ou ancienne) : case à cocher ou quantité
-    var rowEl = el('div', 'ck-item ck-per'), lab = el('label', 'ck-lab'), st = el('span', 'ck-count'), r0 = s.rec[key];
+  /* ---- Cartes Sport / Ménage : lignes récurrentes ---- */
+  function ctl(s, key, label, upd, off){   // saisie d'une période (actuelle ou ancienne) : case à cocher, temps réalisé ou nombre réalisé
+    var rowEl = el('div', 'ck-item ck-per'), st = el('span', 'ck-count'), r0 = s.rec[key], auto = null;
     var isCur = !s.old && !s.g.archivedAt && key === pkeyF(s.f, new Date());
     st.setAttribute('aria-live', 'polite');
     function status(){   // l'état est toujours écrit en toutes lettres (pas seulement une couleur)
-      var r = s.rec[key], x = res(s, r), t = rTarget(s, r), u = rUnit(s, r), txt;
+      var r = s.rec[key], x = res(s, r), t = rTarget(s, r), txt;
       if(s.m === 'quantity'){
-        txt = (r && r.value != null ? num(r.value) : '—') + (t != null ? ' / ' + num(t) : '') + (u ? ' ' + u : '');
-        if(x !== null) txt += ' — ' + (x ? '✓ Objectif atteint' : (isCur ? '… En cours' : '✗ Non atteint'));
+        txt = r && r.value != null ? 'Réalisé : ' + ratio(s, r, r.value, t) : 'Rien de saisi' + (t != null ? ' · objectif : ' + qtxt(s, r, t) : '');
+        if(x !== null) txt += ' — ' + (x ? '✓ Objectif atteint (case cochée)' : (isCur ? '… En cours (case non cochée)' : '✗ Non atteint'));
+        if(auto){
+          auto.hidden = x === null; auto.classList.toggle('on', x === true);
+          auto.setAttribute('aria-label', x === true ? 'Case cochée automatiquement : objectif atteint' : 'Case non cochée : objectif non atteint');
+        }
       }else txt = x ? '✓ Réalisé' : (isCur ? '… À faire' : '✗ Non réalisé');
       st.textContent = txt + (off ? ' (hors période d’activité)' : '');
     }
-    lab.appendChild(el('span', '', label));
+    function refresh(){ status(); if(upd) upd(); }
     if(s.m === 'quantity'){
-      var inp = el('input'); inp.type = 'number'; inp.min = '0'; inp.step = 'any'; inp.inputMode = 'decimal';
-      inp.value = r0 && r0.value != null ? r0.value : '';
-      inp.setAttribute('aria-label', label + ' — ' + s.g.name + (s.unit ? ' (' + s.unit + ')' : ''));
-      inp.oninput = function(){
-        var v = parseFloat(inp.value);
-        if(inp.value === ''){ if((inp.validity && inp.validity.badInput) || !s.rec[key]) return; setRec(s, key, {value: null}); }   // champ vidé : saisie retirée
-        else if(v >= 0) setRec(s, key, {value: v});
-        else { st.textContent = 'Valeur refusée : nombre supérieur ou égal à 0 uniquement.'; return; }
-        status(); if(upd) upd();
-      };
-      lab.appendChild(inp);
+      auto = el('span', 'ck-auto', '✓'); auto.setAttribute('role', 'img');   // case automatique, non modifiable à la main
+      rowEl.appendChild(auto);
+      if(s.kind === 'time'){
+        var grp = el('span', 'ck-lab ck-grp'), tf = timeFields(label + ' — ' + s.g.name + ' : temps réalisé');
+        grp.appendChild(el('span', '', label)); grp.appendChild(tf.el);
+        tf.set(r0 && r0.value != null ? r0.value : null);
+        tf.el.addEventListener('input', function(){
+          var v = tf.read();
+          if(v.bad){ st.textContent = 'Valeur refusée : nombres supérieurs ou égaux à 0 uniquement.'; return; }
+          if(v.empty){ if(!s.rec[key]) return; setRec(s, key, {value: null}); }   // champs vidés : saisie retirée
+          else setRec(s, key, {value: v.v});
+          refresh();
+        });
+        rowEl.appendChild(grp);
+      }else{
+        var lab = el('label', 'ck-lab'), inp = el('input'), u = rUnit(s, r0);
+        lab.appendChild(el('span', '', label));
+        inp.type = 'number'; inp.min = '0'; inp.step = 'any'; inp.inputMode = 'decimal';
+        inp.value = r0 && r0.value != null ? r0.value : '';
+        inp.setAttribute('aria-label', label + ' — ' + s.g.name + ' : réalisé' + (u ? ' (' + u + ')' : ''));
+        inp.oninput = function(){
+          var v = parseFloat(inp.value);
+          if(inp.value === ''){ if((inp.validity && inp.validity.badInput) || !s.rec[key]) return; setRec(s, key, {value: null}); }   // champ vidé : saisie retirée
+          else if(v >= 0) setRec(s, key, {value: v});
+          else { st.textContent = 'Valeur refusée : nombre supérieur ou égal à 0 uniquement.'; return; }
+          refresh();
+        };
+        lab.appendChild(inp);
+        if(u) lab.appendChild(el('span', 'ck-count', u));
+        rowEl.appendChild(lab);
+      }
     }else{
-      var cb = el('input'); cb.type = 'checkbox'; cb.checked = !!(r0 && r0.checked); cb.setAttribute('aria-label', label + ' — ' + s.g.name);
-      cb.onchange = function(){ setRec(s, key, {checked: cb.checked}); status(); if(upd) upd(); };
-      lab.appendChild(cb);
+      var cl = el('label', 'ck-lab'), cb = el('input');
+      cb.type = 'checkbox'; cb.checked = !!(r0 && r0.checked); cb.setAttribute('aria-label', label + ' — ' + s.g.name);
+      cb.onchange = function(){ setRec(s, key, {checked: cb.checked}); refresh(); };
+      cl.appendChild(cb); cl.appendChild(el('span', '', label));
+      rowEl.appendChild(cl);
     }
-    rowEl.appendChild(lab); rowEl.appendChild(st); status(); return rowEl;
+    rowEl.appendChild(st); status(); return rowEl;
   }
   function histPanel(g){   // historique corrigeable : configuration actuelle, puis anciennes configurations dans leur format d'origine
     var wrap = el('div', 'ck-hist'), today = new Date();
@@ -1450,7 +1562,7 @@ window.bootChecklists = function(){
       var host = wrap, n0 = s.f === 'weekly' ? 8 : 14, N = n0, body = el('div'), curK = pkeyF(s.f, today), known = {};
       if(s.old){
         host = el('details');
-        host.appendChild(el('summary', '', 'Ancienne configuration : ' + FREQ[s.f] + ' · ' + MODE[s.m] + ' (jusqu’au ' + pdate(s.to).toLocaleDateString('fr-FR') + ')'));
+        host.appendChild(el('summary', '', 'Ancienne configuration : ' + cfgLbl(s.f, s.kind) + ' (jusqu’au ' + pdate(s.to).toLocaleDateString('fr-FR') + ')'));
         wrap.appendChild(host);
       }
       host.appendChild(body);
@@ -1467,7 +1579,7 @@ window.bootChecklists = function(){
       var extra = Object.keys(s.rec).filter(function(k){ return !known[k]; }).sort();
       if(extra.length){   // enregistrements hors calendrier attendu : conservés et consultables, jamais supprimés
         var ex = el('details'); ex.appendChild(el('summary', '', 'Autres enregistrements conservés (' + extra.length + ')'));
-        extra.forEach(function(k){ var r = s.rec[k]; ex.appendChild(el('div', 'ck-count', k + ' : ' + (r.value != null ? num(r.value) + (rUnit(s, r) ? ' ' + rUnit(s, r) : '') : (r.checked ? 'réalisé' : 'non réalisé')))); });
+        extra.forEach(function(k){ var r = s.rec[k]; ex.appendChild(el('div', 'ck-count', k + ' : ' + (r.value != null ? qtxt(s, r, r.value) : (r.checked ? 'réalisé' : 'non réalisé')))); });
         host.appendChild(ex);
       }
     });
@@ -1489,7 +1601,7 @@ window.bootChecklists = function(){
     g.pauses.forEach(function(p){ if(!p.to) p.to = dkey(new Date()); });
     g.updatedAt = now(); touch(c); save(); render();
   }
-  function move(c, g, dir){   // changement d'ordre parmi les objectifs actifs
+  function move(c, g, dir){   // changement d'ordre parmi les lignes actives
     var act = c.goals.filter(function(x){ return !x.archivedAt; }).sort(byOrder), i = act.indexOf(g), j = i + dir;
     if(j < 0 || j >= act.length) return;
     act[i] = act[j]; act[j] = g; act.forEach(function(x, n){ x.order = n; });
@@ -1498,7 +1610,7 @@ window.bootChecklists = function(){
   function delGoal(c, g){
     var labels = g.archivedAt ? ['Supprimer définitivement', 'Annuler'] : ['Archiver (conserver l’historique)', 'Supprimer définitivement', 'Annuler'];
     window.CloudSync.ask('« ' + g.name + ' »',
-      'Supprimer définitivement cet objectif et tout son historique ? Cette action est irréversible.' + (g.archivedAt ? '' : ' L’archivage le retire du suivi courant tout en conservant son historique et ses statistiques.'),
+      'Supprimer définitivement cette ligne et tout son historique ? Cette action est irréversible.' + (g.archivedAt ? '' : ' L’archivage la retire du suivi courant tout en conservant son historique et ses statistiques.'),
       labels).then(function(i){
         var a = labels[i] || '';
         if(a.indexOf('Archiver') === 0) archive(c, g);
@@ -1506,20 +1618,24 @@ window.bootChecklists = function(){
       });
   }
   function renderGoals(c, box){
-    var sport = c.type === 'sport', sec = el('section', 'card ck-card'); sec.style.setProperty('--c', c.color);
+    var sec = el('section', 'card ck-card'); sec.style.setProperty('--c', c.color);
     var top = el('div', 'head'), counter = el('span', 'date'), today = new Date(); counter.setAttribute('aria-live', 'polite');
     function upd(){ var k = goalProg(c); counter.textContent = TYPELBL[c.type] + ' · périodes en cours : ' + k.d + ' / ' + k.n; }
     top.appendChild(btn('← Retour aux checklists', function(){ cur = null; render(); }));
     top.appendChild(el('h2', '', c.icon + ' ' + c.title)); top.appendChild(counter);
     var acts = el('div', 'actions'); acts.style.marginTop = '0';
-    acts.appendChild(btn(sport ? '+ Ajouter un objectif' : '+ Ajouter une tâche', function(){ openGoal(c, null); }));
+    acts.appendChild(btn('+ Ajouter une ligne', function(){ openGoal(c, null); }));
     acts.appendChild(btn('Modifier la carte', function(){ openDlg(c); }));
     sec.appendChild(top); sec.appendChild(acts);
+    sec.appendChild(el('p', 'hint', 'Clique sur le titre d’une ligne pour la régler (titre, réinitialisation, type d’objectif). Les cases se réinitialisent chaque jour ou chaque lundi ; l’historique est conservé pour les statistiques.'));
     var act = c.goals.filter(function(g){ return !g.archivedAt; }).sort(byOrder);
-    if(!act.length) sec.appendChild(el('p', 'hint', sport ? 'Aucun objectif actif. Utilise « + Ajouter un objectif ».' : 'Aucune tâche active. Utilise « + Ajouter une tâche ».'));
+    if(!act.length) sec.appendChild(el('p', 'hint', 'Aucune ligne active. Utilise « + Ajouter une ligne ».'));
     act.forEach(function(g, idx){
       var s = curS(g), b = el('div', 'ck-goal'), key = pkeyF(s.f, today);
-      b.appendChild(el('strong', '', g.name));
+      var tb = el('button', 'ck-line', g.name); tb.type = 'button'; tb.dataset.line = g.id;   // titre cliquable : ouvre le dialogue de la ligne
+      tb.setAttribute('aria-haspopup', 'dialog'); tb.setAttribute('aria-label', 'Modifier la ligne « ' + g.name + ' »');
+      tb.onclick = function(){ openGoal(c, g); };
+      b.appendChild(tb);
       b.appendChild(el('div', 'meta', describe(g)));
       b.appendChild(ctl(s, key, s.f === 'weekly' ? 'Semaine du ' + pdate(key).toLocaleDateString('fr-FR', {day:'numeric', month:'long'}) : 'Aujourd’hui', upd));
       var bt = el('div', 'ck-btns');
@@ -1540,11 +1656,11 @@ window.bootChecklists = function(){
     });
     var arch = c.goals.filter(function(g){ return g.archivedAt; }).sort(byOrder);
     if(arch.length){
-      var d = el('details'); d.appendChild(el('summary', '', 'Archivés (' + arch.length + ')'));
+      var d = el('details'); d.appendChild(el('summary', '', 'Archivées (' + arch.length + ')'));
       arch.forEach(function(g){
         var w = el('div', 'ck-goal'), r = el('div', 'ck-btns');
         w.appendChild(el('strong', '', g.name));
-        w.appendChild(el('div', 'meta', describe(g) + ' · archivé le ' + new Date(g.archivedAt).toLocaleDateString('fr-FR')));
+        w.appendChild(el('div', 'meta', describe(g) + ' · archivée le ' + new Date(g.archivedAt).toLocaleDateString('fr-FR')));
         r.appendChild(histBtn(g, w));
         r.appendChild(btn('Restaurer', function(){ restore(c, g); }));
         r.appendChild(btn('Supprimer', function(){ delGoal(c, g); }, 'danger'));
@@ -1554,7 +1670,7 @@ window.bootChecklists = function(){
     }
     if(c.items.length){   // lignes de l'ancienne checklist standard : conservées, jamais converties
       var kd = el('details'); kd.appendChild(el('summary', '', 'Lignes standard conservées (' + c.items.length + ')'));
-      kd.appendChild(el('p', 'hint', 'Lignes de la checklist standard d’origine : conservées telles quelles, non converties en objectifs récurrents.'));
+      kd.appendChild(el('p', 'hint', 'Lignes de la checklist standard d’origine : conservées telles quelles, non converties en lignes récurrentes.'));
       c.items.slice().sort(byOrder).forEach(function(it){ kd.appendChild(row(c, it, function(){})); });
       sec.appendChild(kd);
     }
@@ -1565,54 +1681,76 @@ window.bootChecklists = function(){
       Array.prototype.forEach.call(sec.querySelectorAll('[data-mv]'), function(x){ if(x.dataset.mv === moved && !x.disabled) target = x; });
       moved = null; if(target) target.focus();
     }
+    if(focusLine){   // après l'enregistrement du dialogue : le focus revient sur le titre de la ligne
+      var fl = null;
+      Array.prototype.forEach.call(sec.querySelectorAll('[data-line]'), function(x){ if(x.dataset.line === focusLine) fl = x; });
+      focusLine = null; if(fl) fl.focus();
+    }
   }
 
-  /* ---- Boîte de création / modification d'un objectif ou d'une tâche ---- */
+  /* ---- Dialogue d'une ligne (Sport ET Ménage) : titre, réinitialisation, type d'objectif, objectif ---- */
   var gdlg = $('gDialog'), gCard = null, gEdit = null;
-  function syncQty(){ $('gdQty').hidden = $('gdMode').value !== 'quantity'; }
-  $('gdMode').onchange = syncQty;
+  var gdTime = timeFields('Objectif de temps'); $('gdTimeHost').appendChild(gdTime.el);
+  var GOALHINT = {
+    check: 'Simple case : tu la coches toi-même à chaque période.',
+    time: 'À chaque période, tu saisis le temps réellement réalisé. S’il atteint l’objectif, la case se coche toute seule ; en dessous, la case reste décochée mais le temps compte dans les totaux. Sans objectif, le temps est seulement totalisé.',
+    number: 'À chaque période, tu saisis le nombre réellement réalisé. S’il atteint l’objectif, la case se coche toute seule ; en dessous, la case reste décochée mais la valeur compte dans les totaux. Sans objectif, la valeur est seulement totalisée.'
+  };
+  function syncKind(){
+    var k = KINDS.indexOf($('gdMode').value) >= 0 ? $('gdMode').value : 'check';
+    $('gdTimeBox').hidden = k !== 'time'; $('gdNumBox').hidden = k !== 'number';
+    $('gdGoalHint').textContent = GOALHINT[k];
+  }
+  $('gdMode').onchange = syncKind;
   function openGoal(c, g){
     gCard = c; gEdit = g;
-    var sport = c.type === 'sport';
-    $('gdTitle').textContent = sport ? (g ? 'Modifier l’objectif' : 'Nouvel objectif') : (g ? 'Modifier la tâche' : 'Nouvelle tâche');
-    $('gdName').value = g ? g.name : ''; $('gdFreq').value = g ? g.frequency : 'daily'; $('gdMode').value = g ? g.trackingMode : 'check';
-    $('gdTarget').value = g && g.target != null ? g.target : ''; $('gdUnit').value = g ? g.unit : '';
-    $('gdSport').hidden = !sport; syncQty(); $('gdErr').textContent = ''; gdlg.showModal(); $('gdName').focus();
+    var k = g ? kindOf(g) : 'check';
+    $('gdTitle').textContent = g ? 'Modifier la ligne' : 'Nouvelle ligne';
+    $('gdName').value = g ? g.name : ''; $('gdFreq').value = g ? g.frequency : 'daily'; $('gdMode').value = k;
+    gdTime.set(k === 'time' && g.target != null ? g.target : null);
+    $('gdTarget').value = k === 'number' && g.target != null ? g.target : '';
+    $('gdUnit').value = k === 'number' ? g.unit : '';
+    syncKind(); $('gdErr').textContent = ''; gdlg.showModal(); $('gdName').focus();
   }
   $('gdForm').onsubmit = function(e){
     e.preventDefault();
-    var name = $('gdName').value.trim(); if(!name){ $('gdErr').textContent = 'Donne un nom.'; return; }
-    var g = gEdit, sport = gCard.type === 'sport', freq = $('gdFreq').value === 'weekly' ? 'weekly' : 'daily', today = dkey(new Date());
-    /* Carte Ménage : case à cocher ; un objectif existant garde son mode, sa cible et son unité (aucune conversion implicite) */
-    var mode = sport ? ($('gdMode').value === 'quantity' ? 'quantity' : 'check') : (g ? g.trackingMode : 'check');
-    var target = g ? g.target : null, unit = g ? g.unit : '';
-    if(sport){
-      var raw = $('gdTarget').value.trim(), tv = parseFloat(raw);
-      if(mode === 'quantity' && raw !== '' && !(tv >= 0)){ $('gdErr').textContent = 'L’objectif numérique doit être un nombre supérieur ou égal à 0.'; return; }
-      target = mode === 'quantity' && tv > 0 ? tv : null;
-      unit = mode === 'quantity' ? $('gdUnit').value.trim() : '';
+    var name = $('gdName').value.trim(); if(!name){ $('gdErr').textContent = 'Donne un titre à la ligne.'; $('gdName').focus(); return; }
+    var g = gEdit, freq = $('gdFreq').value === 'weekly' ? 'weekly' : 'daily', today = dkey(new Date());
+    var kind = KINDS.indexOf($('gdMode').value) >= 0 ? $('gdMode').value : 'check';
+    var mode = kind === 'check' ? 'check' : 'quantity', target = null, unit = '';
+    if(kind === 'time'){   // temps : stocké en minutes
+      var tv = gdTime.read();
+      if(tv.bad){ $('gdErr').textContent = 'L’objectif de temps doit être composé de nombres supérieurs ou égaux à 0.'; return; }
+      target = !tv.empty && tv.v > 0 ? tv.v : null; unit = 'min';
+    }else if(kind === 'number'){
+      var ti = $('gdTarget'), raw = ti.value.trim(), nv = parseFloat(raw);
+      if((ti.validity && ti.validity.badInput) || (raw !== '' && !(nv >= 0))){ $('gdErr').textContent = 'L’objectif doit être un nombre supérieur ou égal à 0.'; return; }
+      target = nv > 0 ? nv : null; unit = $('gdUnit').value.trim();
     }
     if(g){
-      var changed = freq !== g.frequency || mode !== g.trackingMode;
-      if(changed && Object.keys(g.records).length){   // historique existant : jamais converti, archivé dans son format d'origine
-        if(!confirm('« ' + g.name + ' » possède déjà un historique.\n\nIl ne sera ni supprimé ni converti : il restera consultable et corrigeable dans « Historique », sous son ancienne configuration (' +
-          FREQ[g.frequency] + ' · ' + MODE[g.trackingMode] + ').\n\nLe suivi repart d’aujourd’hui avec la nouvelle configuration (' + FREQ[freq] + ' · ' + MODE[mode] + '). Continuer ?')) return;
-        g.legacy.push({frequency: g.frequency, trackingMode: g.trackingMode, target: g.target, unit: g.unit, from: g.since, to: today, records: g.records});
+      var oldKind = kindOf(g), changed = freq !== g.frequency || kind !== oldKind;
+      if(changed && Object.keys(g.records).length){   // historique existant : jamais converti ni supprimé, archivé dans son format d'origine
+        if(!confirm('« ' + g.name + ' » possède déjà un historique.\n\nRien n’est supprimé ni converti : l’ancienne configuration (' + cfgLbl(g.frequency, oldKind) +
+          ') est archivée avec ses données. Elle reste consultable et corrigeable dans « Historique » et continue de compter dans les statistiques.\n\nLe suivi repart d’aujourd’hui avec la nouvelle configuration (' +
+          cfgLbl(freq, kind) + '). Continuer ?')) return;
+        var old = {frequency: g.frequency, trackingMode: g.trackingMode, target: g.target, unit: g.unit, from: g.since, to: today, records: g.records};
+        if(g.trackingMode === 'quantity') old.quantityKind = oldKind;
+        g.legacy.push(old);
         g.records = {}; g.since = today;
       }
       g.name = name; g.frequency = freq; g.trackingMode = mode; g.target = target; g.unit = unit; g.updatedAt = now();   // l'identifiant ne change jamais
+      if(mode === 'quantity') g.quantityKind = kind; else delete g.quantityKind;
       var s = curS(g), r = s.rec[pkeyF(s.f, new Date())];
-      if(r && mode === 'quantity'){ r.targetAtTime = target; r.unitAtTime = unit; r.checked = res(s, r) === true; }   // seule la période en cours suit la nouvelle cible
+      if(r && mode === 'quantity'){ r.targetAtTime = target; r.unitAtTime = unit; r.checked = res(s, r) === true; }   // seule la période en cours suit le nouvel objectif ; les périodes passées restent figées
     }else{
-      gCard.goals.push({id: uid(), name: name, frequency: freq, trackingMode: mode, target: target, unit: unit, active: true, archivedAt: null,
-        createdAt: now(), updatedAt: now(), order: gCard.goals.reduce(function(m, x){ return Math.max(m, x.order); }, -1) + 1,
-        since: today, pauses: [], legacy: [], records: {}});
+      g = newLine(name, freq, kind, target, unit, gCard.goals.reduce(function(m, x){ return Math.max(m, x.order); }, -1) + 1);
+      gCard.goals.push(g);
     }
-    touch(gCard); save(); gdlg.close(); render();
+    touch(gCard); save(); gdlg.close(); focusLine = g.id; render();
   };
   $('gdCancel').onclick = function(){ gdlg.close(); };
 
-  /* ---- Dashboards Sport / Ménage : calculés depuis les identifiants ; les noms actuels sont lus à l'affichage ---- */
+  /* ---- Dashboards Sport / Ménage : calculés depuis les identifiants ; les noms actuels sont lus à l'affichage. Rien n'est codé en dur. ---- */
   var DF = {sport: {p:'30', card:'all', goal:'all', freq:'all'}, menage: {p:'30', card:'all', goal:'all', freq:'all'}};
   function selectBox(label, opts, val, fn){
     var l = el('label'); l.appendChild(document.createTextNode(label + ' ')); var s = el('select');
@@ -1624,15 +1762,31 @@ window.bootChecklists = function(){
     if(tip){ var i = el('span', 'info', 'i'); i.tabIndex = 0; i.setAttribute('role', 'button'); i.setAttribute('aria-label', 'Aide'); i.dataset.tip = tip; h.appendChild(i); }
     c.appendChild(h); return c;
   }
+  function statTile(label, value, strong){
+    var d = el('div', 'stat' + (strong ? ' total' : '')); d.appendChild(el('span', '', label)); d.appendChild(el('strong', '', String(value))); return d;
+  }
   function addUnit(map, u, v){   // totaux séparés par unité : des unités différentes ne sont jamais additionnées
-    var label = (u || '').trim(), k = label.toLowerCase() || '~', o = map[k] || (map[k] = {label: label || 'sans unité', sum: 0});
+    var label = (u || '').trim(), k = 'u:' + label.toLowerCase(), o = map[k] || (map[k] = {unit: label, sum: 0});
     o.sum += v;
   }
-  function unitsTxt(map){ return Object.keys(map).map(function(k){ return num(map[k].sum) + ' ' + map[k].label; }).join(' · '); }
+  function unitsTxt(map){ return Object.keys(map).map(function(k){ return num(map[k].sum) + (map[k].unit ? ' ' + map[k].unit : ''); }).join(' · '); }
+  function streak(map, curN, curOk){   // périodes complètes consécutives ; la période en cours ne casse jamais la série
+    var ks = Object.keys(map).sort(), run = 0, best = 0;
+    ks.forEach(function(k){ if(map[k].ok === map[k].n){ run++; if(run > best) best = run; } else run = 0; });
+    if(curN && curOk === curN) run++;
+    if(run > best) best = run;
+    return {run: run, best: best, any: ks.length > 0 || curN > 0};
+  }
   function renderDash(kind){
-    var box = $('dash-' + kind), f = DF[kind], sport = kind === 'sport'; box.innerHTML = '';
+    var box = $('dash-' + kind), f = DF[kind]; box.innerHTML = '';
     var cards = data.cards.filter(function(c){ return c.type === kind; }).sort(byOrder);
-    if(!cards.length){ box.appendChild(el('p', 'hint', 'Aucune carte ' + TYPELBL[kind] + '. Crée-en une dans l’onglet Checklists (champ « Type de checklist »).')); return; }
+    if(!cards.length){
+      var seeded = isObj(data.defaultCards) && data.defaultCards[kind];
+      box.appendChild(el('p', 'hint', 'Aucune carte ' + TYPELBL[kind] + '. ' + (seeded
+        ? 'Crée-en une dans l’onglet Checklists (champ « Type de checklist »).'
+        : 'La carte par défaut sera créée automatiquement dès que la synchronisation avec ton compte aura réussi ; tu peux aussi en créer une dans l’onglet Checklists.')));
+      return;
+    }
     if(!cards.some(function(c){ return c.id === f.card; })) f.card = 'all';
     var all = [];
     cards.forEach(function(c){ c.goals.slice().sort(byOrder).forEach(function(g){ all.push({c: c, g: g}); }); });
@@ -1645,30 +1799,35 @@ window.bootChecklists = function(){
     var fc = el('section', 'card controls');
     fc.appendChild(selectBox('Période', [['7','7 derniers jours'],['30','30 derniers jours'],['12w','12 dernières semaines'],['all','Tout l’historique']], f.p, again('p', 0)));
     fc.appendChild(selectBox('Carte', [['all','Toutes']].concat(cards.map(function(c){ return [c.id, c.icon + ' ' + c.title]; })), f.card, again('card', 1)));
-    fc.appendChild(selectBox(sport ? 'Objectif' : 'Tâche', [['all', sport ? 'Tous' : 'Toutes']].concat(inCard.map(function(x){ return [x.g.id, x.g.name + (x.g.archivedAt ? ' (archivé)' : '')]; })), f.goal, again('goal', 2)));
-    fc.appendChild(selectBox('Fréquence', [['all','Toutes'],['daily','Quotidienne'],['weekly','Hebdomadaire']], f.freq, again('freq', 3)));
+    fc.appendChild(selectBox('Ligne', [['all','Toutes']].concat(inCard.map(function(x){ return [x.g.id, x.g.name + (x.g.archivedAt ? ' (archivée)' : '')]; })), f.goal, again('goal', 2)));
+    fc.appendChild(selectBox('Réinitialisation', [['all','Toutes'],['daily','Chaque jour'],['weekly','Chaque semaine']], f.freq, again('freq', 3)));
     box.appendChild(fc);
     var picked = inCard.filter(function(x){ return (f.goal === 'all' || x.g.id === f.goal) && (f.freq === 'all' || x.g.frequency === f.freq); });
     if(!picked.length){
-      box.appendChild(el('p', 'hint', all.length ? 'Rien à afficher pour ces filtres.' : (sport ? 'Aucun objectif pour l’instant : ajoute-en dans une carte Sport.' : 'Aucune tâche pour l’instant : ajoute-en dans une carte Ménage.')));
+      box.appendChild(el('p', 'hint', all.length ? 'Rien à afficher pour ces filtres.' : 'Aucune ligne pour l’instant : ajoute-en dans une carte ' + TYPELBL[kind] + ' (onglet Checklists).'));
       return;
     }
 
     var today = new Date(), td = dkey(today), mon = mondayKey(today);
     var ws = f.p === '7' ? addDays(td, -6) : f.p === '30' ? addDays(td, -29) : f.p === '12w' ? addDays(mon, -84) : '';   // début de la fenêtre (jour local)
-    var tot = {ev: 0, ok: 0}, units = {}, rows = [], dayAll = {}, weekMap = {}, byCard = {}, fails = [], tdN = 0, tdOk = 0, wkN = 0, wkOk = 0, active = 0, archived = 0;
+    var tot = {ev: 0, ok: 0}, units = dict(), timeTot = 0, hasTime = false, rows = [], dayAll = dict(), weekAll = dict(), weekMap = dict(), byCard = dict(), fails = [];
+    var tdN = 0, tdOk = 0, wkN = 0, wkOk = 0, active = 0, archived = 0;
     picked.forEach(function(x){
       var g = x.g, ca = byCard[x.c.id] || (byCard[x.c.id] = {c: x.c, ev: 0, ok: 0, act: 0});
-      var rw = {x: x, ev: 0, ok: 0, sums: {}, run: 0, best: 0, cur: null};
+      var rw = {x: x, ev: 0, ok: 0, sums: dict(), time: 0, run: 0, best: 0, cur: null};
       if(g.archivedAt) archived++; else { active++; ca.act++; }
       series(g).forEach(function(s){
         var curK = pkeyF(s.f, today), run = 0;
-        if(s.m === 'quantity') Object.keys(s.rec).forEach(function(k){   // quantités réellement saisies dans la fenêtre
+        if(s.kind === 'time') hasTime = true;
+        else if(s.kind === 'number' && !s.old && !g.archivedAt){ addUnit(rw.sums, s.unit, 0); addUnit(units, s.unit, 0); }   // total visible (à 0) dès la création de la ligne
+        if(s.m === 'quantity') Object.keys(s.rec).forEach(function(k){   // valeurs réellement saisies dans la fenêtre, même sous l'objectif
           var r = s.rec[k];
-          if(DKEY.test(k) && r.value > 0 && pend(s.f, k) >= ws){ addUnit(rw.sums, rUnit(s, r), r.value); addUnit(units, rUnit(s, r), r.value); }
+          if(!(DKEY.test(k) && r.value > 0 && pend(s.f, k) >= ws)) return;
+          if(s.kind === 'time'){ rw.time += r.value; timeTot += r.value; }   // les temps sont totalisés à part (minutes)
+          else { addUnit(rw.sums, rUnit(s, r), r.value); addUnit(units, rUnit(s, r), r.value); }
         });
         plist(s, today).forEach(function(k){
-          if(!expected(s, k)) return;                       // archivé ou reconfiguré : ni réussite ni échec
+          if(!expected(s, k)) return;                       // archivée ou reconfigurée : ni réussite ni échec
           var r = s.rec[k], v = res(s, r);
           if(k === curK){                                   // période en cours : affichée à part, jamais comptée comme échec
             rw.cur = {s: s, r: r, v: v};
@@ -1677,10 +1836,10 @@ window.bootChecklists = function(){
             if(v){ run++; if(!s.old && run > rw.best) rw.best = run; }
             return;
           }
-          if(v === null) return;                            // quantité sans cible : non évaluable
+          if(v === null) return;                            // temps / nombre sans objectif : non évaluable
           if(v) run++; else run = 0;
           if(!s.old && run > rw.best) rw.best = run;
-          if(s.f === 'daily'){ var d = dayAll[k] || (dayAll[k] = {n: 0, ok: 0}); d.n++; if(v) d.ok++; }
+          var am = s.f === 'daily' ? dayAll : weekAll, d = am[k] || (am[k] = {n: 0, ok: 0}); d.n++; if(v) d.ok++;
           var e = pend(s.f, k); if(e < ws) return;          // période terminée avant la fenêtre choisie
           rw.ev++; tot.ev++; ca.ev++;
           if(v){ rw.ok++; tot.ok++; ca.ok++; } else fails.push({e: e, k: k, s: s, r: r, x: x});
@@ -1690,28 +1849,35 @@ window.bootChecklists = function(){
       });
       rows.push(rw);
     });
-    var dks = Object.keys(dayAll).sort(), run = 0, best = 0;   // séries de jours complets (tout l'historique, indépendamment de la période choisie)
-    dks.forEach(function(k){ if(dayAll[k].ok === dayAll[k].n){ run++; if(run > best) best = run; } else run = 0; });
-    if(tdN && tdOk === tdN) run++;
-    if(run > best) best = run;
+    /* Séries (tout l'historique, indépendamment de la période choisie) : jours complets, ou semaines complètes s'il n'y a que des lignes hebdomadaires */
+    var sd = streak(dayAll, tdN, tdOk), sw = streak(weekAll, wkN, wkOk);
     var pct = function(a, b){ return b ? Math.round(a / b * 100) + ' %' : '—'; };
 
-    var tiles = [[sport ? 'Objectifs actifs' : 'Tâches actives', active]];
-    if(archived) tiles.push(['Archivés', archived]);
-    tiles.push(['Aujourd’hui (en cours)', tdN ? tdOk + ' / ' + tdN : '—'], ['Cette semaine (en cours)', wkN ? wkOk + ' / ' + wkN : '—'],
+    var tiles = [['Lignes actives', active]];
+    if(archived) tiles.push(['Lignes archivées', archived]);
+    tiles.push(['Fait aujourd’hui (en cours)', tdN ? tdOk + ' / ' + tdN : '—'], ['Fait cette semaine (en cours)', wkN ? wkOk + ' / ' + wkN : '—'],
       ['Réussite (périodes terminées)', tot.ev ? pct(tot.ok, tot.ev) + ' (' + tot.ok + ' / ' + tot.ev + ')' : '—']);
-    if(dks.length || tdN) tiles.push(['Série actuelle', run + ' j'], ['Meilleure série', best + ' j']);
-    var kp = section('Indicateurs clés', '« Aujourd’hui » : ' + (sport ? 'objectifs quotidiens' : 'tâches quotidiennes') + ' ; « Cette semaine » : ' + (sport ? 'objectifs hebdomadaires' : 'tâches hebdomadaires') + '. Réussite : périodes terminées de la période choisie, la période en cours n’est jamais comptée comme un échec. Séries : jours consécutifs où tout ce qui était attendu au quotidien a été réalisé (tout l’historique).');
+    if(sd.any) tiles.push(['Série actuelle', sd.run + ' j'], ['Meilleure série', sd.best + ' j']);
+    else if(sw.any) tiles.push(['Série actuelle', sw.run + ' sem.'], ['Meilleure série', sw.best + ' sem.']);
+    var kp = section('Indicateurs clés', '« Fait aujourd’hui » : lignes réinitialisées chaque jour ; « Fait cette semaine » : lignes réinitialisées chaque semaine. Réussite : périodes terminées de la période choisie ; la période en cours n’est jamais comptée comme un échec, et une valeur sous l’objectif n’est pas une réussite. Séries : jours consécutifs où toutes les lignes quotidiennes attendues ont été réussies (semaines consécutives s’il n’y a que des lignes hebdomadaires), sur tout l’historique.');
     var stt = el('div', 'stats');
-    tiles.forEach(function(t){ var d = el('div', 'stat'); d.appendChild(el('span', '', t[0])); d.appendChild(el('strong', '', String(t[1]))); stt.appendChild(d); });
+    tiles.forEach(function(t){ stt.appendChild(statTile(t[0], t[1])); });
     kp.appendChild(stt);
-    if(sport && Object.keys(units).length) kp.appendChild(el('p', 'hint', 'Quantités réalisées sur la période, par unité (jamais additionnées entre elles, période en cours incluse) : ' + unitsTxt(units)));
-    if(!tot.ev) kp.appendChild(el('p', 'hint', 'Pas encore de période terminée sur ces filtres : les taux apparaîtront à partir de demain ou de la semaine prochaine.'));
+    if(!tot.ev) kp.appendChild(el('p', 'hint', 'Aucune période terminée sur ces filtres : aucun taux n’est affiché. Les périodes actuelles sont « en cours » ; les taux apparaîtront à partir de demain (lignes quotidiennes) ou de lundi prochain (lignes hebdomadaires).'));
     box.appendChild(kp);
+
+    var uk = Object.keys(units);
+    if(hasTime || uk.length){   // totaux réalisés : le temps à part, puis une tuile par unité (jamais de mélange)
+      var tt = section('Totaux réalisés', 'Somme des valeurs réellement saisies sur la période choisie (période en cours incluse), même quand l’objectif n’est pas atteint. Les temps sont regroupés à part ; des unités différentes ne sont jamais additionnées.');
+      var ts = el('div', 'stats');
+      if(hasTime) ts.appendChild(statTile('Temps réalisé', fmtMin(timeTot), true));
+      uk.forEach(function(k){ ts.appendChild(statTile('Total · ' + (units[k].unit || 'sans unité'), num(units[k].sum))); });
+      tt.appendChild(ts); box.appendChild(tt);
+    }
 
     var wks = Object.keys(weekMap).sort().slice(-12);   // évolution hebdomadaire du taux de réussite
     var ch = section('Évolution hebdomadaire', 'Part des périodes terminées réussies, regroupées par semaine (12 dernières semaines au plus).');
-    if(!wks.length) ch.appendChild(el('p', 'hint', 'Pas encore de période terminée sur ces filtres.'));
+    if(!wks.length) ch.appendChild(el('p', 'hint', 'Pas encore de période terminée sur ces filtres : rien à tracer pour l’instant.'));
     else{
       var W = 640, H = 150, bw = W / wks.length, svg = '<svg viewBox="0 0 ' + W + ' ' + (H + 40) + '" style="width:100%;height:auto" role="img" aria-label="Taux de réussite par semaine">' +
         '<line x1="0" x2="' + W + '" y1="' + (H + 18) + '" y2="' + (H + 18) + '" stroke="var(--line)"/>';
@@ -1727,37 +1893,39 @@ window.bootChecklists = function(){
     }
     box.appendChild(ch);
 
-    var tb = section(sport ? 'Détail par objectif' : 'Détail par tâche (les plus oubliées en premier)', 'Série : périodes réussies d’affilée dans la configuration actuelle (actuelle / meilleure).');
+    var worstFirst = kind === 'menage';
+    var tb = section(worstFirst ? 'Détail par ligne (les plus oubliées en premier)' : 'Détail par ligne', 'Série : périodes réussies d’affilée dans la configuration actuelle (actuelle / meilleure). Total réalisé : valeurs saisies sur la période choisie, même sous l’objectif.');
     var tw = el('div', 'tablewrap'), t = el('table'), hd = el('tr');
-    ['Nom', 'Fréquence', 'Réussite', 'Série'].concat(sport ? ['Total'] : []).concat(['Période en cours']).forEach(function(h){ hd.appendChild(el('th', '', h)); });
+    ['Ligne', 'Réinitialisation', 'Objectif', 'Réussite', 'Série', 'Total réalisé', 'Période en cours'].forEach(function(h){ var th = el('th', '', h); th.scope = 'col'; hd.appendChild(th); });
     t.appendChild(hd);
     rows.forEach(function(r){ r.rate = r.ev ? r.ok / r.ev : null; });
-    rows.sort(function(a, b){ var ra = a.rate === null ? 2 : a.rate, rb = b.rate === null ? 2 : b.rate; return sport ? (b.rate === null ? -1 : b.rate) - (a.rate === null ? -1 : a.rate) : ra - rb; });
+    rows.sort(function(a, b){ var ra = a.rate === null ? 2 : a.rate, rb = b.rate === null ? 2 : b.rate; return worstFirst ? ra - rb : (b.rate === null ? -1 : b.rate) - (a.rate === null ? -1 : a.rate); });
     rows.forEach(function(r){
-      var g = r.x.g, cs = curS(g), tr = el('tr'), c0 = r.cur, curTxt = '—', evaluable = cs.m !== 'quantity' || cs.target != null, u = cs.f === 'weekly' ? ' sem.' : ' j';
+      var g = r.x.g, cs = curS(g), tr = el('tr'), c0 = r.cur, curTxt = '—', evaluable = cs.m !== 'quantity' || cs.target != null, u = cs.f === 'weekly' ? ' sem.' : ' j', totTxt = '—';
       if(c0){
         if(c0.s.m === 'quantity'){
-          var ct = rTarget(c0.s, c0.r), cu = rUnit(c0.s, c0.r);
-          curTxt = (c0.r && c0.r.value != null ? num(c0.r.value) : '0') + (ct != null ? ' / ' + num(ct) : '') + (cu ? ' ' + cu : '') + (c0.v === null ? '' : (c0.v ? ' — ✓ atteint' : ' — … en cours'));
+          curTxt = ratio(c0.s, c0.r, c0.r && c0.r.value != null ? c0.r.value : 0, rTarget(c0.s, c0.r)) + (c0.v === null ? ' (en cours)' : (c0.v ? ' — ✓ atteint' : ' — … en cours'));
         }else curTxt = c0.v ? '✓ Réalisé' : '… À faire (en cours)';
       }
-      var cells = [r.x.c.icon + ' ' + g.name + (g.archivedAt ? ' (archivé)' : ''), FREQ[g.frequency],
+      var parts = [];
+      if(r.time > 0 || cs.kind === 'time') parts.push(fmtMin(r.time));
+      if(Object.keys(r.sums).length) parts.push(unitsTxt(r.sums));
+      if(parts.length) totTxt = parts.join(' · ');
+      [r.x.c.icon + ' ' + g.name + (g.archivedAt ? ' (archivée)' : ''), FREQ[g.frequency], objTxt(g),
         r.ev ? r.ok + ' / ' + r.ev + ' (' + Math.round(r.rate * 100) + ' %)' : '—',
-        evaluable ? (g.archivedAt ? '—' : r.run + u) + ' / ' + r.best + u : '—'];
-      if(sport) cells.push(Object.keys(r.sums).length ? unitsTxt(r.sums) : '—');
-      cells.push(curTxt);
-      cells.forEach(function(v){ tr.appendChild(el('td', '', v)); });
+        evaluable ? (g.archivedAt ? '—' : r.run + u) + ' / ' + r.best + u : '—',
+        totTxt, curTxt].forEach(function(v){ tr.appendChild(el('td', '', v)); });
       t.appendChild(tr);
     });
     tw.appendChild(t); tb.appendChild(tw); box.appendChild(tb);
 
     if(tot.ev){
-      var fl = section(sport ? 'Dernières périodes non atteintes' : 'Derniers oublis');
+      var fl = section(worstFirst ? 'Derniers oublis' : 'Dernières périodes non atteintes');
       fails.sort(function(a, b){ return a.e < b.e ? 1 : (a.e > b.e ? -1 : 0); });
       if(!fails.length) fl.appendChild(el('p', 'hint', 'Aucune période manquée sur ces filtres.'));
       fails.slice(0, 8).forEach(function(x){
         var s = x.s, txt = plabel(s, x.k) + ' — ' + x.x.c.icon + ' ' + s.g.name;
-        if(s.m === 'quantity') txt += ' : ' + (x.r && x.r.value != null ? num(x.r.value) : '0') + ' / ' + num(rTarget(s, x.r)) + (rUnit(s, x.r) ? ' ' + rUnit(s, x.r) : '');
+        if(s.m === 'quantity') txt += ' : ' + ratio(s, x.r, x.r && x.r.value != null ? x.r.value : 0, rTarget(s, x.r));
         fl.appendChild(el('div', 'ck-count', '✗ ' + txt));
       });
       if(fails.length > 8) fl.appendChild(el('p', 'hint', '… et ' + (fails.length - 8) + ' autre(s) sur la période.'));
@@ -1767,22 +1935,44 @@ window.bootChecklists = function(){
     var bc = Object.keys(byCard);
     if(bc.length > 1){
       var pc = section('Par carte');
-      bc.forEach(function(id){ var a = byCard[id]; pc.appendChild(el('div', 'ck-count', a.c.icon + ' ' + a.c.title + ' : ' + a.act + ' actif(s) · réussite ' + pct(a.ok, a.ev))); });
+      bc.forEach(function(id){ var a = byCard[id]; pc.appendChild(el('div', 'ck-count', a.c.icon + ' ' + a.c.title + ' : ' + a.act + ' ligne(s) active(s) · réussite ' + (a.ev ? pct(a.ok, a.ev) : '— (aucune période terminée)'))); });
       box.appendChild(pc);
     }
+  }
+  function refreshDash(){ ['sport','menage'].forEach(function(k){ if(!$('tab-dash').hidden && !$('dash-' + k).hidden) renderDash(k); }); }
+
+  /* ---- Cartes Sport / Ménage par défaut : créées UNE SEULE FOIS ----
+     Appelée par la couche Supabase, uniquement après une réconciliation réussie avec le cloud et une fois l'application démarrée
+     (l'écriture est alors détectée et synchronisée comme n'importe quelle modification).
+     Le drapeau data.defaultCards est exporté et synchronisé : une carte supprimée n'est jamais recréée,
+     et rien n'est créé si une carte de ce type existe déjà (le drapeau est simplement posé). */
+  function ensureDefaults(){
+    var flags = isObj(data.defaultCards) ? data.defaultCards : {}, changed = false;
+    DEFAULT_CARDS.forEach(function(def){
+      if(flags[def.type]) return;
+      if(!data.cards.some(function(c){ return c.type === def.type; })){
+        var order = data.cards.reduce(function(m, c){ return Math.max(m, c.order); }, -1) + 1;
+        data.cards.push({id: uid(), type: def.type, title: def.title, icon: def.icon, color: def.color, createdAt: now(), updatedAt: now(), order: order, items: [],
+          goals: def.lines.map(function(l, i){ return newLine(l[0], l[1], l[2], l[3], l[4], i); })});   // lignes vides, à la date du jour
+      }
+      flags[def.type] = true; changed = true;
+    });
+    if(!changed) return false;
+    data.defaultCards = flags;
+    save(); render(); refreshDash();
+    return true;
   }
 
   /* Changement de jour (ou de semaine) pendant que la page reste ouverte : on affiche la nouvelle période, rien n'est effacé */
   var shownDay = dkey(new Date());
   function dayCheck(){
     var d = dkey(new Date()); if(d === shownDay) return;
-    shownDay = d; render();
-    ['sport','menage'].forEach(function(k){ if(!$('tab-dash').hidden && !$('dash-' + k).hidden) renderDash(k); });
+    shownDay = d; render(); refreshDash();
   }
   setInterval(dayCheck, 60000);
   document.addEventListener('visibilitychange', dayCheck);
 
-  window.Checklists = {render: render, renderDash: renderDash};
+  window.Checklists = {render: render, renderDash: renderDash, ensureDefaults: ensureDefaults};
   render();
 };
 })();
@@ -1798,7 +1988,7 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_M-y34_JtymHy8BpOpTnBZA_6Y791iFO
 const SITE_URL = "https://paul-altgr.github.io/dashboard/";   // retour des liens e-mail (confirmation, récupération)
 const TABLE = "weekly_plans";
 const SAVE_DEBOUNCE_MS = 1000, RETRY_MS = 15000;
-const SCHEMA = 2, SCHEMAS_OK = [1, 2];   // schéma 2 : types de cartes + objectifs récurrents ; le schéma 1 reste accepté puis migré
+const SCHEMA = 2, SCHEMAS_OK = [1, 2];   // schéma 2 : types de cartes + lignes récurrentes (quantityKind et defaultCards sont facultatifs : pas de nouveau schéma) ; le schéma 1 reste accepté puis migré
 const LEGACY = {plan:'planning39h.v2', hist:'planning39h.history.v1', chk:'planning39h.checklists.v1'};   // clés localStorage d'origine
 
 (function(){
@@ -1812,6 +2002,9 @@ const readJSON = k => { try{ return JSON.parse(ls.get(k)); }catch(e){ return nul
 window.CloudSync = {keys:{plan:'', hist:'', chk:''}, ask:ask};   // clés propres à l'utilisateur + boîte de dialogue générique, lues par l'application
 let metaKey = '', sb = null, user = null, booted = false, starting = false, recovery = false, busy = false, timer = null, notice = '';
 let meta = {dirty:false, base:null, localAt:null};   // dirty : modifications locales non envoyées ; base : updated_at de la dernière synchro
+let cloudReady = false;   // true : la dernière réconciliation avec le cloud a abouti (condition pour créer les cartes par défaut)
+let reloading = false;    // true : un rechargement de la page est en route (plus aucune création automatique)
+let checking = false, conflictP = null, askQueue = Promise.resolve();
 
 /* ---------- Indicateur de synchronisation ---------- */
 const STATES = {session:'Vérification de la session…', login:'Connexion nécessaire', loading:'Chargement du planning…',
@@ -1837,16 +2030,21 @@ function frErr(e){
 }
 const fd = iso => iso ? new Date(iso).toLocaleString('fr-FR') : 'inconnue';
 
-/* ---------- Boîte de dialogue générique : renvoie l'index du bouton (-1 si fermée) ---------- */
+/* ---------- Boîte de dialogue générique : renvoie l'index du bouton (-1 si fermée) ----------
+   Les demandes sont mises en file : un dialogue ne peut jamais en écraser un autre encore ouvert. */
 function ask(title, text, labels){
-  return new Promise(res => {
+  const open = () => new Promise(res => {
     const d = $('cloudDialog'), box = $('cdBtns'); let done = false;
     $('cdTitle').textContent = title; $('cdText').textContent = text; box.innerHTML = '';
     const fin = v => { if(done) return; done = true; d.close(); res(v); };
     labels.forEach((l, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = l; b.onclick = () => fin(i); box.appendChild(b); });
     d.oncancel = e => { e.preventDefault(); fin(-1); };
+    if(d.open) d.close();
     d.showModal();
   });
+  const p = askQueue.then(open);
+  askQueue = p.then(() => {}, () => {});
+  return p;
 }
 
 /* ---------- Format des données, validation, migration, exportation ---------- */
@@ -1860,13 +2058,15 @@ function validChk(c){   // checklists optionnelles (anciens exports sans cette p
   const num = v => v === undefined || Number.isFinite(v);
   const qty = v => v === undefined || v === null || (Number.isFinite(v) && v >= 0);
   const text = v => v === undefined || typeof v === 'string';
+  const kind = v => v === undefined || v === null || ['time','number'].includes(v);   // quantityKind : facultatif (absent dans les anciennes données)
   const recs = o => o === undefined || (ok(o) && Object.keys(o).every(k => ok(o[k]) && qty(o[k].value) && (o[k].checked === undefined || typeof o[k].checked === 'boolean')));
   const cfg = g => (g.frequency === undefined || ['daily','weekly'].includes(g.frequency)) && (g.trackingMode === undefined || ['check','quantity'].includes(g.trackingMode)) &&
-    qty(g.target) && text(g.unit) && recs(g.records);
+    kind(g.quantityKind) && qty(g.target) && text(g.unit) && recs(g.records);
   const goal = g => ok(g) && typeof g.id === 'string' && g.id && typeof g.name === 'string' && cfg(g) && date(g.createdAt) && date(g.updatedAt) &&
     (g.archivedAt === null || date(g.archivedAt)) && num(g.order) && (g.pauses === undefined || Array.isArray(g.pauses)) &&
     (g.legacy === undefined || (Array.isArray(g.legacy) && g.legacy.every(l => ok(l) && cfg(l))));
   if(!ok(c) || !Array.isArray(c.cards)) return false;
+  if(c.defaultCards !== undefined && !ok(c.defaultCards)) return false;   // drapeau des cartes par défaut : facultatif
   return c.cards.every(k => ok(k) && typeof k.id === 'string' && k.id && typeof k.title === 'string' &&
     (k.icon === undefined || typeof k.icon === 'string') && (k.color === undefined || /^#[0-9a-fA-F]{6}$/.test(k.color)) &&
     (k.type === undefined || ['standard','sport','menage'].includes(k.type)) &&   // ancienne carte sans type : acceptée, deviendra « standard »
@@ -1888,7 +2088,7 @@ function valid(d){   // refuse toute structure incompatible ; les données ne so
     return Object.keys(h).every(k => /^\d{4}-\d{1,2}-\d{1,2}$/.test(k) && ['entreprise','ecole'].includes(h[k].type) && Number.isFinite(h[k].goal) && Number.isFinite(h[k].done));
   }catch(e){ return false; }
 }
-function migrate(d){   // migration explicite et idempotente vers le schéma actuel (1 → 2 : type « standard », structures des objectifs récurrents)
+function migrate(d){   // migration explicite et idempotente vers le schéma actuel (1 → 2 : type « standard », structures des lignes récurrentes ; quantityKind complété si absent)
   const out = Object.assign({}, d, {schema:SCHEMA});
   if(d.checklists !== undefined && d.checklists !== null) out.checklists = window.ChkModel.normalize(d.checklists);
   return out;
@@ -1914,7 +2114,7 @@ async function fetchRemote(){
   if(error) throw error;
   return data;   // null si aucune ligne
 }
-async function pushNow(force){
+async function pushNow(force){   // renvoie false uniquement si un conflit a été détecté et n'a pas été résolu
   if(!user || busy) return;
   clearTimeout(timer);
   if(!navigator.onLine){ status('offline'); return; }
@@ -1948,38 +2148,57 @@ Storage.prototype.setItem = function(k, v){
 };
 
 /* ---------- Gestion des conflits ---------- */
-async function conflict(r){
+function conflict(r){   // un seul dialogue de conflit à la fois ; renvoie true si le conflit est résolu (sans rechargement en cours)
+  if(!conflictP) conflictP = resolveConflict(r).finally(() => { conflictP = null; });
+  return conflictP;
+}
+async function resolveConflict(r){
   status('pending');
   const c = await ask('Conflit de synchronisation',
     'Version de cet appareil : modifiée le ' + fd(meta.localAt) + '. Version en ligne : modifiée le ' + fd(r.updated_at) + '. Laquelle voulez-vous garder ?',
     ['Conserver la version de cet appareil', 'Utiliser la version en ligne', 'Annuler et exporter une sauvegarde']);
-  if(c === 0) return pushNow(true);
+  if(c === 0){ await pushNow(true); return true; }
   if(c === 1){
-    if(!valid(r.data)){ status('error'); return; }
+    if(!valid(r.data)){ status('error'); return false; }
     download(snapshot(), 'planning-sauvegarde-appareil');   // filet de sécurité avant remplacement
     applyData(r.data); meta.base = r.updated_at; meta.dirty = false; saveMeta();
-    if(booted) location.reload(); else status('ok');
-    return;
+    if(booted){ reloading = true; location.reload(); return false; }
+    status('ok'); return true;
   }
   download(snapshot(), 'planning-sauvegarde');
+  return false;
 }
 
 /* ---------- Chargement depuis Supabase et réconciliation ---------- */
-async function reconcile(){   // renvoie false si l'utilisateur annule
+async function reconcile(){   // renvoie false si l'utilisateur annule ou si la page se recharge ; met à jour cloudReady
+  cloudReady = false;
   const r = await fetchRemote();
-  if(!r){ if(!booted) return firstTime(); if(meta.dirty) await pushNow(); return true; }
+  if(!r){
+    if(!booted){ const ok = await firstTime(); cloudReady = ok; return ok; }
+    cloudReady = !meta.dirty || (await pushNow()) !== false;
+    return true;
+  }
   const rt = Date.parse(r.updated_at), bt = meta.base ? Date.parse(meta.base) : null;
   if(bt === null && readJSON(window.CloudSync.keys.plan) && !meta.dirty){ meta.dirty = true; meta.localAt = new Date().toISOString(); }   // jamais écraser des données locales jamais synchronisées
   if(!meta.dirty){
     if(rt !== bt){
       if(!valid(r.data)){ status('error'); return true; }
       applyData(r.data); meta.base = r.updated_at; saveMeta();
-      if(booted){ location.reload(); return false; }
+      if(booted){ reloading = true; location.reload(); return false; }
     }
-    status('ok'); return true;
+    status('ok'); cloudReady = true; return true;
   }
-  if(rt !== bt) await conflict(r); else await pushNow();
+  if(rt !== bt) cloudReady = await conflict(r);
+  else cloudReady = (await pushNow()) !== false;
   return true;
+}
+
+/* ---------- Cartes Sport / Ménage par défaut ----------
+   Créées une seule fois, uniquement quand : l'application est démarrée (l'écriture est alors synchronisée),
+   la réconciliation avec le cloud a abouti (pas de doublon entre deux appareils) et aucun rechargement n'est en route. */
+function seedDefaults(){
+  if(!booted || !cloudReady || reloading || !window.Checklists) return;
+  try{ window.Checklists.ensureDefaults(); }catch(e){}
 }
 
 /* ---------- Migration des anciennes données localStorage ---------- */
@@ -2023,7 +2242,8 @@ async function start(u){
   show('loading'); status('loading');
   try{
     if(!(await reconcile())){ starting = false; show('login'); return; }
-  }catch(e){   // hors ligne ou erreur réseau : on utilise le cache de ce compte
+  }catch(e){   // hors ligne ou erreur réseau : on utilise le cache de ce compte (les cartes par défaut attendront une réconciliation réussie)
+    cloudReady = false;
     if(!(readJSON(K.plan) || readJSON(K.hist))){
       starting = false; show('login'); status(navigator.onLine ? 'error' : 'offline');
       msg('authMsg', 'Connexion Internet nécessaire pour charger votre planning la première fois sur cet appareil.'); return;
@@ -2034,6 +2254,7 @@ async function start(u){
   window.bootChecklists(); window.bootPlanning(); window.bootHistory();   // l'application démarre seulement ici
   booted = true; starting = false; show('app');
   if(notice) msg('acctMsg', notice);
+  seedDefaults();   // après « booted » : la création des cartes par défaut est enregistrée ET marquée à synchroniser
   if(meta.dirty) pushNow();
 }
 
@@ -2091,10 +2312,11 @@ function init(){
     if(!/\.json$/i.test(f.name)) return msg('acctMsg', 'Fichier refusé : seul un fichier .json est accepté.');
     let d; try{ d = JSON.parse(await f.text()); }catch(err){ return msg('acctMsg', 'Fichier refusé : JSON invalide.'); }
     if(!valid(d)) return msg('acctMsg', 'Fichier refusé : ce n’est pas une sauvegarde de ce planning.');
-    d = migrate(d);   // anciens exports (schéma 1, cartes sans type, sans Sport ni Ménage) : migrés puis revalidés
+    d = migrate(d);   // anciens exports (schéma 1, cartes sans type, sans Sport ni Ménage, sans quantityKind) : migrés puis revalidés
     if(!valid(d)) return msg('acctMsg', 'Fichier refusé : la sauvegarde n’a pas pu être migrée vers le format actuel.');
     if(await ask('Remplacer les données ?', 'Les données actuelles seront remplacées par le contenu du fichier. Une sauvegarde des données actuelles sera téléchargée avant.', ['Remplacer mes données', 'Annuler']) !== 0) return;
     download(snapshot(), 'planning-sauvegarde-avant-import');
+    reloading = true;   // la page va se recharger : plus aucune création automatique d'ici là
     applyData(d); meta.dirty = true; meta.localAt = new Date().toISOString(); saveMeta();
     await pushNow(true);
     msg('acctMsg', meta.dirty ? 'Import enregistré sur cet appareil ; la synchronisation en ligne reprendra automatiquement.' : 'Import réussi et synchronisé.');
@@ -2102,7 +2324,13 @@ function init(){
   };
 
   /* ---------- Hors ligne / retour d'Internet / retour sur la page ---------- */
-  const check = () => { if(booted && user && navigator.onLine) reconcile().catch(() => status('error')); };
+  const check = async () => {   // une seule réconciliation à la fois ; les cartes par défaut en attente sont créées après une réconciliation réussie
+    if(!booted || !user || !navigator.onLine || checking || reloading) return;
+    checking = true;
+    try{ if(await reconcile()) seedDefaults(); }
+    catch(e){ status('error'); }
+    finally{ checking = false; }
+  };
   document.addEventListener('visibilitychange', () => { if(!document.hidden) check(); });
   window.addEventListener('online', check);
   window.addEventListener('offline', () => { if(booted) status('offline'); });
