@@ -1,4 +1,3 @@
-<script>
 /* ==========================================================================
    Onglet Checklists (cartes Standard / Paramétrable / Sport / Ménage) et Dashboards Sport / Ménage / Devoirs.
    Données (clé window.CloudSync.keys.chk, synchronisées par la couche Supabase) — tous les champs récents sont facultatifs :
@@ -1649,4 +1648,3 @@ window.bootChecklists = function(){
   render();
 };
 })();
-</script>
