@@ -1,4 +1,3 @@
-<script>
 /* Démarré par la couche Supabase une fois l'utilisateur authentifié */
 window.bootPlanning = function(){
   var GOAL = 39 * 60, DAY = 39 * 60 / 5, KEY = window.CloudSync.keys.plan;   // cache local propre à l'utilisateur
@@ -399,4 +398,3 @@ window.bootPlanning = function(){
   renderDate();
   update();
 };
-</script>
