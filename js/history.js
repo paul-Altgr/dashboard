@@ -1,4 +1,3 @@
-<script>
 /* ==========================================================================
    Historique, Dashboard Heures et onglets.
    - Store : lecture/écriture JSON dans le cache localStorage de l'utilisateur (la synchro Supabase est gérée dans le dernier script).
@@ -269,4 +268,3 @@ window.bootHistory = function(){
   sync();
   show(location.hash.slice(1));
 };
-</script>
