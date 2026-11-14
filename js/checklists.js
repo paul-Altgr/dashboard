@@ -1276,14 +1276,24 @@ window.bootChecklists = function(){
     return {root: root, W: W, H: H, L: L, R: R, T: T, B: B, max: max, idx: n > 2 ? [0, Math.floor((n - 1) / 2), n - 1] : (n === 2 ? [0, 1] : (n ? [0] : [])),
       y: function(v){ return T + (1 - Math.min(v, max) / max) * (H - T - B); }};
   }
-  function lineChart(o){   // o : {labels, series:[{name,color,vals,main}], max, suffix, aria, gold}
+  function lineChart(o){   // o : {labels, series:[{name,color,vals,main,step}], max, suffix, aria, gold}
     var n = o.labels.length, f = frame(o, n), X = function(i){ return n > 1 ? f.L + i * (f.W - f.L - f.R) / (n - 1) : (f.L + f.W - f.R) / 2; };
     f.idx.forEach(function(i, j){
       svg('text', {x: X(i).toFixed(1), y: f.H - 6, 'text-anchor': n === 1 ? 'middle' : (j === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle')), style: 'fill:var(--muted);font-size:11px'}, f.root).textContent = o.labels[i];
     });
     o.series.forEach(function(s){
       var d = '', pen = false;
-      s.vals.forEach(function(v, i){ if(v === null){ pen = false; return; } d += (pen ? 'L' : 'M') + X(i).toFixed(1) + ' ' + f.y(v).toFixed(1); pen = true; });
+      if(s.step){
+        // Step chart: horizontal line then vertical
+        s.vals.forEach(function(v, i){
+          if(v === null){ pen = false; return; }
+          var x = X(i);
+          if(!pen){ d += 'M' + x.toFixed(1) + ' ' + f.y(v).toFixed(1); pen = true; }
+          else { d += 'H' + x.toFixed(1) + 'V' + f.y(v).toFixed(1); }
+        });
+      }else{
+        s.vals.forEach(function(v, i){ if(v === null){ pen = false; return; } d += (pen ? 'L' : 'M') + X(i).toFixed(1) + ' ' + f.y(v).toFixed(1); pen = true; });
+      }
       if(d) svg('path', {d: d, fill: 'none', style: 'stroke:' + s.color + ';stroke-width:' + (s.main ? 3.2 : 1.6) + ';stroke-linejoin:round;stroke-linecap:round' + (s.main ? '' : ';opacity:.9')}, f.root);
       if(s.main || n <= 31) s.vals.forEach(function(v, i){
         if(v === null) return;
@@ -1493,8 +1503,8 @@ window.bootChecklists = function(){
         var pct = function(map, b){ var n = 0, o = 0, i, m; for(i = 0; i < (byDay ? 1 : 7); i++){ m = map[addDays(b, i)]; if(m){ n += m.n; o += m.ok; } } return n ? Math.round(o / n * 100) : null; };
         var multi = selL.length > 1, shown = function(L){ return has(st.vis, L.id) ? st.vis[L.id] : selL.length <= 8; };
         var main = bk.map(function(b){ return pct(dayAll, b); }), ser = [], mainName = multi ? 'Sélection' : selL[0].name;
-        if(multi) selL.forEach(function(L){ if(shown(L)) ser.push({name: L.name, color: L.color, vals: bk.map(function(b){ return pct(L.days, b); })}); });
-        ser.push({name: mainName, color: 'var(--accent)', vals: main, main: true});
+        if(multi) selL.forEach(function(L){ if(shown(L)) ser.push({name: L.name, color: L.color, vals: bk.map(function(b){ return pct(L.days, b); }), step: repOf(L.g).unit === 'week' }); });
+        ser.push({name: mainName, color: 'var(--accent)', vals: main, main: true, step: false});
         var s2 = section('Assiduité', 'Part des lignes attendues réellement faites, par ' + (byDay ? 'jour' : 'semaine') + '. Les points dorés marquent les ' + (byDay ? 'jours' : 'semaines') + ' à 100 %.'), lgd = el('div', 'legend');
         if(main.some(function(x){ return x !== null; })){
           s2.appendChild(chartBox(lineChart({labels: lab, series: ser, max: 100, suffix: ' %', gold: true, aria: 'Assiduité par ' + (byDay ? 'jour' : 'semaine') + ' du ' + dfmt(F) + ' au ' + dfmt(hi)})));
@@ -1524,21 +1534,12 @@ window.bootChecklists = function(){
         var prev = 0; keys.forEach(function(x){ if(x < F) prev = runAt[x]; });
         var rv = bk.map(function(b){ var i, x; for(i = 0; i < (byDay ? 1 : 7); i++){ x = addDays(b, i); if(x > hi) break; if(runAt[x] !== undefined) prev = runAt[x]; } return prev; });
         var s4 = section('Évolution des séries', 'Nombre de jours complets consécutifs, relevé à chaque ' + (byDay ? 'jour' : 'fin de semaine') + '.');
-        s4.appendChild(chartBox(lineChart({labels: lab, series: [{name: 'Série', color: 'var(--ok)', vals: rv, main: true}], max: Math.max(1, Math.max.apply(null, rv.concat([1]))), suffix: ' j', aria: 'Évolution de la série de jours complets'})));
+        s4.appendChild(chartBox(lineChart({labels: lab, series: [{name: 'Série', color: 'var(--ok)', vals: rv, main: true, step: true}], max: Math.max(1, Math.max.apply(null, rv.concat([1]))), suffix: ' j', aria: 'Évolution de la série de jours complets'})));
         var l4 = el('div', 'legend'); l4.appendChild(lg('k-line', 'var(--ok)', 'Série de jours complets')); s4.appendChild(l4);
         s4.appendChild(altTable(['Période', 'Série (jours)'], bk.map(function(b, i){ return [lab[i], rv[i]]; })));
         out.appendChild(s4);
       }else out.appendChild(el('p', 'hint empty', 'La période choisie est entièrement à venir : rien à tracer pour l’instant.'));
 
-      var s5 = section('Réalisé par ligne', 'Chaque barre est proportionnelle à la progression (0–100 %). Le trait vertical de l’objectif marque les 100 %. À droite : périodes évaluées / progression · total réalisé. Survole ou focuse une barre pour l’infobulle (nom, réalisé, objectif, %) ; clique pour isoler la ligne.');
-      s5.appendChild(hbBars(selL.map(function(L){
-        var pct = L.ev ? L.ok / L.ev * 100 : 0;
-        return {name: L.name, pct: pct, color: L.color, goal: 100,
-          txt: (L.ev ? Math.round(L.ok / L.ev * 100) + ' % · ' + L.ok + '/' + L.ev : '—') + (totTxt(L) !== '—' ? ' · ' + totTxt(L) : ''),
-          tip: L.name + ' · ' + (L.ev ? Math.round(L.ok / L.ev * 100) + ' % (' + L.ok + ' / ' + L.ev + ')' : '—') + ' · total ' + totTxt(L) + ' · ' + repLbl(repOf(L.g)),
-          onActivate: function(){ var b = qd(out, 'hb', L.id); if(b) b.focus(); } };
-      }), 'hb', out));
-      out.appendChild(s5);
       if(selL.length > 1 && ok){
         var s6 = section('Répartition par ligne', 'Part de chaque ligne dans les périodes réussies de la plage.');
         s6.appendChild(hbList(selL.filter(function(L){ return L.ok; }).sort(function(a, b){ return b.ok - a.ok; }).map(function(L){ return {name: L.name, pct: L.ok / ok * 100, color: L.color, txt: Math.round(L.ok / ok * 100) + ' % · ' + L.ok}; })));
@@ -1664,7 +1665,7 @@ window.bootChecklists = function(){
         var wl = bk.map(function(x){ return 'sem. du ' + dfmt(x, fm); });
         var cnt = function(list){ return bk.map(function(x){ var y = addDays(x, 6); return list.filter(function(d){ return d.at >= x && d.at <= y; }).length; }); };
         var vf = cnt(done), vt = cnt(onTime), l4 = el('div', 'legend');
-        s4.appendChild(chartBox(lineChart({labels: wl, series: [{name: 'Faits à temps', color: 'var(--ok)', vals: vt}, {name: 'Faits', color: 'var(--accent)', vals: vf, main: true}], max: Math.max(1, Math.max.apply(null, vf.concat([1]))), aria: 'Devoirs faits et faits à temps par semaine'})));
+        s4.appendChild(chartBox(lineChart({labels: wl, series: [{name: 'Faits à temps', color: 'var(--ok)', vals: vt, step: true}, {name: 'Faits', color: 'var(--accent)', vals: vf, main: true, step: true}], max: Math.max(1, Math.max.apply(null, vf.concat([1]))), aria: 'Devoirs faits et faits à temps par semaine'})));
         l4.appendChild(lg('k-main', '', 'Faits')); l4.appendChild(lg('k-line', 'var(--ok)', 'Faits à temps')); s4.appendChild(l4);
         s4.appendChild(altTable(['Semaine', 'Faits', 'Faits à temps'], bk.map(function(x, j){ return [wl[j], vf[j], vt[j]]; })));
       }else s4.appendChild(el('p', 'hint empty', 'La période choisie est entièrement à venir.'));
