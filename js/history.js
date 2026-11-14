@@ -237,32 +237,56 @@ window.bootHistory = function(){
   });
   window.addEventListener('hashchange', function(){ show(location.hash.slice(1)); });
 
-  /* Infobulles : un seul élément flottant ; survol (souris), toucher/clic (mobile), clavier */
-  var tipEl = $('tip'), tipFor = null, pinned = false;
-  function showTip(el){
-    tipEl.textContent = el.dataset.tip || '';
-    if(!tipEl.textContent){ hideTip(); return; }
-    tipEl.hidden = false; tipFor = el;
-    var r = el.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight;
-    var x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
-    var y = r.bottom + 8; if(y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 8);
-    tipEl.style.left = x + 'px'; tipEl.style.top = y + 'px';
-  }
-  function hideTip(){ tipEl.hidden = true; tipFor = null; pinned = false; }
-  function infoOf(e){ return e.target.closest ? e.target.closest('.info') : null; }
-  document.addEventListener('pointerover', function(e){ var el = infoOf(e); if(el && e.pointerType === 'mouse' && !pinned) showTip(el); });
-  document.addEventListener('pointerout', function(e){ var el = infoOf(e); if(el && e.pointerType === 'mouse' && !pinned) hideTip(); });
-  document.addEventListener('click', function(e){
-    var el = infoOf(e);
-    if(!el){ hideTip(); return; }
-    e.preventDefault();
-    if(tipFor === el && pinned) hideTip(); else { showTip(el); pinned = true; }
-  });
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape') hideTip();
-    if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('info')){ e.preventDefault(); e.target.click(); }
-  });
-  window.addEventListener('scroll', hideTip, true);
+  /* Infobulles : un seul élément flottant window.Tip (popover="manual" → couche supérieure, même dans un <dialog> ouvert avec showModal()).
+     Repli propre si l'API popover est absente. Délégation sur tout [data-tip] (y compris ajouté dynamiquement et dans les SVG).
+     API : Tip.show(el), Tip.hide(). L'ancien mécanisme (pointerover/out/clic sur .info) est supprimé : pas de doublon. */
+  var Tip = (function(){
+    var el = $('tip'), shown = null, pinned = false, usePopover = !!(el && 'showPopover' in el);
+    if(usePopover) el.hidden = true;
+    function pos(el){
+      var r = el.getBoundingClientRect(), w = el.offsetWidth || 160, h = el.offsetHeight || 40;
+      var x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
+      var y = r.bottom + 8; if(y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 8);
+      return [x, y];
+    }
+    function apply(tip, el){
+      var p = pos(el);
+      if(usePopover){ tip.style.left = p[0] + 'px'; tip.style.top = p[1] + 'px'; tip.showPopover(); }
+      else { tip.style.left = p[0] + 'px'; tip.style.top = p[1] + 'px'; tip.hidden = false; }
+    }
+    function show(target){
+      if(!target || !target.dataset.tip) return;
+      el.textContent = target.dataset.tip;
+      if(!el.textContent){ hide(); return; }
+      shown = target; pinned = true; apply(el, target);
+    }
+    function hide(){ if(usePopover && el.open) el.hidePopover(); else el.hidden = true; shown = null; pinned = false; }
+    function toggle(target){ if(shown === target) hide(); else show(target); }
+    function onPointer(e){
+      var t = e.target.closest ? e.target.closest('[data-tip]') : null;
+      if(!t) return;
+      if(e.pointerType === 'mouse'){ if(e.type === 'pointerover' && !pinned) show(t); else if(e.type === 'pointerout') hide(); }
+    }
+    function onClick(e){
+      var t = e.target.closest ? e.target.closest('[data-tip]') : null;
+      if(!t){ hide(); return; }
+      e.preventDefault(); toggle(t);
+    }
+    function onFocus(e){ var t = e.target.closest ? e.target.closest('[data-tip]') : null; if(t && !pinned) show(t); }
+    function onBlur(){ hide(); }
+    document.addEventListener('pointerover', onPointer);
+    document.addEventListener('pointerout', onPointer);
+    document.addEventListener('click', onClick);
+    document.addEventListener('focusin', onFocus);
+    document.addEventListener('focusout', onBlur);
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape'){ hide(); if(shown) (shown.focus || function(){}).call(shown); }
+    });
+    window.addEventListener('scroll', hide, true);
+    window.addEventListener('resize', hide);
+    return {show: show, hide: hide, toggle: toggle};
+  })();
+  window.Tip = Tip;
 
   window.PlanApp = {store: Store, registerWidget: function(w){ widgets.push(w); if(!$('tab-dash').hidden) renderDash(); }};
   sync();

@@ -194,7 +194,7 @@
     else delete out.defaultCards;
     return out;
   }
-  window.ChkModel = {normalize: normalize};   // fonction pure, réutilisée par la couche Supabase (import, données en ligne)
+  window.ChkModel = {normalize: normalize, progress: progress, pStatus: pStatus, res: res};   // fonctions pures, réutilisées par la couche Supabase (import, données en ligne)
 
   /* Nouvelle ligne récurrente : vide, à la date du jour (aucun historique inventé) */
   function newLine(name, rp, kind, target, unit, order){
@@ -238,6 +238,21 @@
     if(s.m === 'quantity'){ var t = tgt(s, k); if(t == null) return null; return !!r && r.value != null && r.value >= t; }
     return !!(r && r.checked);
   }
+  /* Progression d'une période : null (non évaluable) ou nombre entre 0 et 1.
+     - simple case : 0 (non fait) ou 1 (fait).
+     - temps / nombre avec objectif : min(réalisé / objectif, 1) → 1 sur 2 = 50 %.
+     Utilisée PARTOUT (tuiles, assiduité, graphiques, heatmap, tableaux, détail) : « atteint » = 1, « partiel » = entre 0 et 1, « non fait » = 0. */
+  function progress(s, k){
+    var r = s.rec[k];
+    if(s.m === 'quantity'){
+      var t = tgt(s, k);
+      if(t == null || t === 0) return null;
+      if(!r || r.value == null) return 0;
+      return Math.min(1, r.value / t);
+    }
+    return r && r.checked ? 1 : 0;
+  }
+  function pStatus(p){ return p === null ? 'non évaluable' : (p >= 1 ? 'atteint' : (p > 0 ? 'partiel' : 'non fait')); }
   function qtxt(s, k, v){ if(s.kind === 'time') return fmtMin(v); var u = unitOf(s, k); return num(v) + (u ? ' ' + u : ''); }
   function ratio(s, k, v){   // « 15 min / 20 min » ou « 25 / 30 répétitions »
     var t = tgt(s, k);
@@ -358,12 +373,12 @@ window.bootChecklists = function(){
   function byId(id){ return data.cards.filter(function(c){ return c.id === id; })[0]; }
   function touch(c){ c.updatedAt = now(); }
   function counts(c){ return {d: c.items.filter(function(i){ return i.checked; }).length, n: c.items.length}; }
-  function goalProg(c){   // lignes actives : périodes en cours atteintes / évaluables
+  function goalProg(c){   // lignes actives : progression des périodes en cours (0..1) / évaluables
     var n = 0, d = 0, td = today();
     c.goals.forEach(function(g){
       if(g.archivedAt) return;
-      var s = curS(g), r = res(s, pkey(s, td));
-      if(r !== null){ n++; if(r) d++; }
+      var s = curS(g), p = progress(s, pkey(s, td));
+      if(p !== null){ n++; d += p; }
     });
     return {d: d, n: n};
   }
@@ -1337,25 +1352,25 @@ window.bootChecklists = function(){
   }
 
   /* ---- Dashboard Sport / Ménage ---- */
-  function calcLine(L, F, T, td){   // réussite par période terminée ; la période en cours n'est jamais un échec ; totaux par unité
+  function calcLine(L, F, T, td){   // progression par période terminée (0..1) ; la période en cours n'est jamais un échec ; totaux par unité
     var g = L.g;
     L.ev = 0; L.ok = 0; L.min = 0; L.time = false; L.units = dict(); L.days = dict(); L.cur = undefined; L.cs = null; L.curTxt = '—'; L.run = 0; L.best = 0; L.fails = [];
     series(g).forEach(function(s){
       var curK = !s.old && !g.archivedAt ? pkey(s, td) : null, run = 0, best = 0;
       plist(s, td).forEach(function(k){
         if(!expected(s, k)) return;
-        var x = res(s, k), isCur = k === curK, e = pEnd(s, k), r = s.rec[k], b;
+        var p = progress(s, k), isCur = k === curK, e = pEnd(s, k), r = s.rec[k], b;
         if(isCur){
-          L.cs = s; L.cur = x;
-          L.curTxt = s.m === 'quantity' ? (r && r.value != null ? ratio(s, k, r.value) : 'rien de saisi') : (x ? '✓ fait' : 'à faire');
+          L.cs = s; L.cur = p;
+          L.curTxt = s.m === 'quantity' ? (r && r.value != null ? ratio(s, k, r.value) : 'rien de saisi') : (p >= 1 ? '✓ fait' : 'à faire');
         }
-        if(x === null) return;   // sans objectif : ni réussite ni échec
+        if(p === null) return;   // sans objectif : ni réussite ni échec
         if(isCur || e > td) e = td;
-        b = L.days[e] || (L.days[e] = {n: 0, ok: 0}); b.n++; if(x) b.ok++;
-        if(isCur){ b.cur = true; if(x) run++; }
+        b = L.days[e] || (L.days[e] = {n: 0, ok: 0}); b.n++; b.ok += p;
+        if(isCur){ b.cur = true; if(p >= 1) run++; }
         else{
-          if(x) run++; else run = 0;
-          if(e >= F && e <= T){ L.ev++; if(x) L.ok++; else L.fails.push({e: e, txt: plabel(s, k)}); }
+          if(p >= 1) run++; else run = 0;
+          if(e >= F && e <= T){ L.ev += p; L.ok += p; if(p < 1) L.fails.push({e: e, txt: plabel(s, k)}); }
         }
         if(run > best) best = run;
       });
