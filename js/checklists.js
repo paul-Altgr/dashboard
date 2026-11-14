@@ -204,12 +204,13 @@
   window.ChkModel = {normalize: normalize, progress: progress, pStatus: pStatus, res: res, colorOf: colorOf};   // fonctions pures, réutilisées par la couche Supabase (import, données en ligne)
 
   /* Nouvelle ligne récurrente : vide, à la date du jour (aucun historique inventé) */
-  function newLine(name, rp, kind, target, unit, order){
+  function newLine(name, rp, kind, target, unit, order, color){
     var g = withFreq({id: uid(), name: name, repeat: {every: rp.every, unit: rp.unit}, trackingMode: kind === 'check' ? 'check' : 'quantity',
       target: kind === 'check' ? null : target, unit: kind === 'time' ? 'min' : (kind === 'number' ? unit : ''),
       active: true, archivedAt: null, createdAt: now(), updatedAt: now(), order: order,
       since: dkey(new Date()), pauses: [], legacy: [], records: {}, targetLog: []});
     if(kind !== 'check') g.quantityKind = kind;
+    if(color) g.color = color;
     return g;
   }
   /* Carte « Devoirs » : checklist paramétrable préconfigurée (les rôles et les identifiants d'options sont stables, les noms restent libres) */
@@ -1146,12 +1147,14 @@ window.bootChecklists = function(){
   function openGoal(c, g, only){
     gCard = c; gEdit = g || null; gOnly = !!(g && only);
     var k = g ? kindOf(g) : 'check';
+    var col = (g && HEX.test(g.color)) ? g.color : colorOf(g);
     $('gdTitle').textContent = gOnly ? 'Objectifs — ' + g.name : (g ? 'Modifier la ligne' : 'Nouvelle ligne');
     vis($('gdNameBox'), !gOnly);
     $('gdName').value = g ? g.name : ''; $('gdMode').value = KL[k] ? k : 'check';
     gdTime.set(g && k === 'time' && g.target != null ? g.target : null);
     $('gdTarget').value = g && k === 'number' && g.target != null ? g.target : '';
     $('gdUnit').value = g && k === 'number' ? (g.unit || '') : '';
+    $('gdColor').value = col;
     gdRep.set(g ? repOf(g) : {every: 1, unit: 'day'});
     $('gdErr').textContent = ''; syncKind(); gDlg.showModal();
     if(gOnly) $('gdMode').focus(); else $('gdName').focus();
@@ -1159,6 +1162,7 @@ window.bootChecklists = function(){
   $('gdForm').onsubmit = function(e){
     e.preventDefault();
     var g = gEdit, c = gCard, err = $('gdErr'), name = gOnly ? g.name : $('gdName').value.trim(), k = $('gdMode').value, rp = gdRep.get(), target = null, unit = '', td = today();
+    var col = $('gdColor').value;
     if(!name){ err.textContent = 'Donne un titre à la ligne.'; return; }
     if(!isRep(rp)){ err.textContent = 'Indique une répétition valide (nombre entier supérieur ou égal à 1).'; return; }
     if(k === 'time'){
@@ -1171,7 +1175,7 @@ window.bootChecklists = function(){
       target = nv > 0 ? nv : null; unit = $('gdUnit').value.trim();
     }else k = 'check';
     var mode = k === 'check' ? 'check' : 'quantity';
-    if(!g){ g = newLine(name, {every: rp.every, unit: rp.unit}, k, target, unit, nextOrder(c.goals)); c.goals.push(g); }
+    if(!g){ g = newLine(name, {every: rp.every, unit: rp.unit}, k, target, unit, nextOrder(c.goals), col); c.goals.push(g); }
     else{
       var oldK = kindOf(g), oldRp = repOf(g);
       if(!isObj(g.records)) g.records = {};
@@ -1306,8 +1310,13 @@ window.bootChecklists = function(){
     ['L', 'M', 'M', 'J', 'V', 'S', 'D'].forEach(function(t, j){ svg('text', {x: 0, y: j * (S + G) + S - 3, style: 'fill:var(--muted);font-size:10px'}, root).textContent = t; });
     while(k <= to && i++ < 400){
       m = map[k]; d = dd(start, k); p = m && m.n ? m.ok / m.n : -1;
+      var style;
+      if(p < 0) style = 'fill:var(--heat-none)';           // rien d'attendu
+      else if(p >= 1) style = 'fill:var(--heat-full)';     // 100%
+      else if(p > 0) style = 'fill:var(--heat-partial)';   // partiel
+      else style = 'fill:var(--heat-zero)';                // 0%
       r = svg('rect', {x: L + Math.floor(d / 7) * (S + G), y: (d % 7) * (S + G), width: S, height: S, rx: 3,
-        style: p < 0 ? 'fill:var(--line);opacity:.45' : (p >= 1 ? 'fill:var(--gold)' : (p > 0 ? 'fill:var(--accent);opacity:' + (.3 + .6 * p).toFixed(2) : 'fill:var(--warn);opacity:.55'))}, root);
+        style: style}, root);
       svg('title', {}, r).textContent = dfmt(k) + ' : ' + (p < 0 ? 'rien d’attendu' : m.ok + ' / ' + m.n + (m.cur ? ' (en cours)' : ''));
       k = addDays(k, 1);
     }
@@ -1489,9 +1498,9 @@ window.bootChecklists = function(){
         var s2 = section('Assiduité', 'Part des lignes attendues réellement faites, par ' + (byDay ? 'jour' : 'semaine') + '. Les points dorés marquent les ' + (byDay ? 'jours' : 'semaines') + ' à 100 %.'), lgd = el('div', 'legend');
         if(main.some(function(x){ return x !== null; })){
           s2.appendChild(chartBox(lineChart({labels: lab, series: ser, max: 100, suffix: ' %', gold: true, aria: 'Assiduité par ' + (byDay ? 'jour' : 'semaine') + ' du ' + dfmt(F) + ' au ' + dfmt(hi)})));
-          lgd.appendChild(lg('k-main', '', mainName)); lgd.appendChild(lg('k-dot', 'var(--gold)', '100 %'));
+          lgd.appendChild(lg('k-main', '', mainName)); lgd.appendChild(lg('k-line', 'var(--heat-full)', '100 %'));
           if(multi) selL.forEach(function(L){
-            var on = shown(L), b = btn('', function(){ st.vis[L.id] = !on; draw(); var again = qd(out, 'lg', L.id); if(again) again.focus(); }, 'lgb' + (on ? '' : ' off')), sw = el('i', 'k-line');
+            var on = shown(L), b = btn('', function(){ st.vis[L.id] = !on; draw(); var again = qd(out, 'lg', L.id); if(again) again.focus(); }, 'lgb' + (on ? '' : ' off')), sw = el('i', 'k-main');
             sw.style.setProperty('--c', L.color); b.appendChild(sw); b.appendChild(el('span', '', L.name));
             b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('data-lg', L.id); b.title = on ? 'Masquer la courbe' : 'Afficher la courbe';
             lgd.appendChild(b);
@@ -1506,7 +1515,7 @@ window.bootChecklists = function(){
         var wd = [0, 1, 2, 3, 4, 5, 6].map(function(){ return [0, 0]; }), k2 = hf, g2 = 0, m2, w2;
         while(k2 <= hi && g2++ < 400){ m2 = dayAll[k2]; if(m2 && m2.n){ w2 = dd(mondayOfKey(k2), k2); wd[w2][1]++; if(m2.ok === m2.n) wd[w2][0]++; } k2 = addDays(k2, 1); }
         s3.appendChild(chartBox(heat(dayAll, hf, hi, 'Carte des jours du ' + dfmt(hf) + ' au ' + dfmt(hi))));
-        [['var(--line)', 'rien d’attendu'], ['var(--warn)', '0 %'], ['var(--accent)', 'partiel'], ['var(--gold)', '100 %']].forEach(function(x){ l3.appendChild(lg('k-dot', x[0], x[1])); });
+        [['var(--heat-none)', 'rien d’attendu'], ['var(--heat-zero)', '0 %'], ['var(--heat-partial)', 'partiel'], ['var(--heat-full)', '100 %']].forEach(function(x){ l3.appendChild(lg('k-dot', x[0], x[1])); });
         s3.appendChild(l3);
         if(hf !== F) s3.appendChild(el('p', 'hint', 'Affichage limité aux 26 dernières semaines de la période.'));
         s3.appendChild(altTable(['Jour', 'Jours complets', 'Jours suivis'], ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map(function(n, i){ return [n, wd[i][0], wd[i][1]]; })));
