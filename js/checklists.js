@@ -194,7 +194,14 @@
     else delete out.defaultCards;
     return out;
   }
-  window.ChkModel = {normalize: normalize, progress: progress, pStatus: pStatus, res: res};   // fonctions pures, réutilisées par la couche Supabase (import, données en ligne)
+  /* Couleur d'une ligne : champ facultatif goal.color / colonne.color, sinon attribuée de façon stable à partir de l'id (une seule couleur par ligne, partout : tableau, légende, courbes, barres, heatmap). */
+  function colorOf(item){
+    if(item && typeof item === 'object' && HEX.test(String(item.color || ''))) return item.color;
+    var s = String(item && item.id || ''), h = 0;
+    for(var i = 0; i < s.length; i++){ h = (h * 31 + s.charCodeAt(i)) | 0; }
+    return PAL[(h % PAL.length + PAL.length) % PAL.length];
+  }
+  window.ChkModel = {normalize: normalize, progress: progress, pStatus: pStatus, res: res, colorOf: colorOf};   // fonctions pures, réutilisées par la couche Supabase (import, données en ligne)
 
   /* Nouvelle ligne récurrente : vide, à la date du jour (aucun historique inventé) */
   function newLine(name, rp, kind, target, unit, order){
@@ -1225,6 +1232,35 @@ window.bootChecklists = function(){
     });
     return ul;
   }
+  function hbBars(items, cls, host, st){   // barres horizontales interactives : largeur proportionnelle, couleur de la ligne, repère d'objectif visible, valeur au bout.
+    // Interactions : survol/focus = infobulle (nom, réalisé, objectif, %) ; clic = isoler/surligner la ligne. st.hbSel = id isolé (ou null).
+    if(!st) st = {};
+    if(st.hbSel === undefined) st.hbSel = null;
+    var ul = el('ul', 'hb');
+    var maxPct = items.reduce(function(m, it){ return Math.max(m, it.pct || 0); }, 0) || 1;
+    items.forEach(function(it){
+      var li = el('li'), t = el('span', 'hb-t'), i = el('i'), goal = el('i', 'hb-g'), lab = el('span', 'hb-v');
+      var w = it.pct ? Math.max(2, it.pct / maxPct * 100) : 0;
+      i.style.width = w + '%'; if(it.color) i.style.background = it.color;
+      if(it.goal != null){ goal.style.width = Math.min(100, it.goal / maxPct * 100) + '%'; goal.style.left = (it.goal >= maxPct ? '100%' : (it.goal / maxPct * 100) + '%'); t.appendChild(goal); }
+      lab.textContent = it.txt || '';
+      var b = el('button', 'hb-b'); b.type = 'button'; b.textContent = it.name; b.setAttribute('aria-label', it.name + ' : ' + (it.txt || ''));
+      if(it.tip) b.setAttribute('data-tip', it.tip);
+      b.setAttribute('data-hb', it.name);
+      b.addEventListener('focus', function(){ if(it.tip && window.Tip) window.Tip.show(b); });
+      b.addEventListener('blur', function(){ if(window.Tip) window.Tip.hide(); });
+      b.addEventListener('pointerover', function(){ if(it.tip && window.Tip) window.Tip.show(b); });
+      b.addEventListener('pointerout', function(){ if(window.Tip) window.Tip.hide(); });
+      b.addEventListener('click', function(){ st.hbSel = st.hbSel === it.name ? null : it.name; renderHB(); });
+      t.appendChild(b);
+      li.appendChild(el('span', 'hb-n', it.name)); li.appendChild(t); li.appendChild(lab);
+      if(st.hbSel === it.name) li.style.outline = '2px solid ' + (it.color || 'var(--accent)');
+      ul.appendChild(li);
+    });
+    function renderHB(){ ul.querySelectorAll('li').forEach(function(l){ var n = l.querySelector('.hb-b').getAttribute('data-hb'); l.style.outline = st.hbSel === n ? '2px solid ' + (items.filter(function(x){ return x.name === n; })[0].color || 'var(--accent)') : ''; }); }
+    renderHB();
+    return ul;
+  }
   function frame(o, n){   // cadre commun : lignes de repère + graduations
     var W = 640, H = 210, L = 40, R = 12, T = 12, B = 24, max = o.max || 1;
     var root = svg('svg', {viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': o.aria});
@@ -1387,7 +1423,7 @@ window.bootChecklists = function(){
     var st = dfOf(kind), cards = data.cards.filter(function(c){ return c.type === kind; }), lines = [], lo = today();
     if(!cards.length){ noCard(host, 'Aucune carte ' + (TYPELBL[kind] || kind) + '.', kind); return; }
     cards.forEach(function(c){ c.goals.slice().sort(byOrder).forEach(function(g){
-      lines.push({c: c, g: g, id: g.id, name: (cards.length > 1 ? c.title + ' › ' : '') + g.name + (g.archivedAt ? ' (archivée)' : ''), color: PAL[lines.length % PAL.length]});
+      lines.push({c: c, g: g, id: g.id, name: (cards.length > 1 ? c.title + ' › ' : '') + g.name + (g.archivedAt ? ' (archivée)' : ''), color: colorOf(g)});
       series(g).forEach(function(s){ if(DKEY.test(s.from || '') && s.from < lo) lo = s.from; });
     }); });
     if(st.lines) st.lines = st.lines.filter(function(id){ return lines.some(function(L){ return L.id === id; }); });
@@ -1485,8 +1521,14 @@ window.bootChecklists = function(){
         out.appendChild(s4);
       }else out.appendChild(el('p', 'hint empty', 'La période choisie est entièrement à venir : rien à tracer pour l’instant.'));
 
-      var s5 = section('Réalisé par ligne', 'Barre : taux de réussite sur la plage. À droite : périodes réussies / terminées et total réalisé.');
-      s5.appendChild(hbList(selL.map(function(L){ return {name: L.name, pct: L.ev ? L.ok / L.ev * 100 : 0, color: L.color, txt: (L.ev ? Math.round(L.ok / L.ev * 100) + ' % · ' + L.ok + '/' + L.ev : '—') + (totTxt(L) !== '—' ? ' · ' + totTxt(L) : '')}; })));
+      var s5 = section('Réalisé par ligne', 'Chaque barre est proportionnelle à la progression (0–100 %). Le trait vertical de l’objectif marque les 100 %. À droite : périodes évaluées / progression · total réalisé. Survole ou focuse une barre pour l’infobulle (nom, réalisé, objectif, %) ; clique pour isoler la ligne.');
+      s5.appendChild(hbBars(selL.map(function(L){
+        var pct = L.ev ? L.ok / L.ev * 100 : 0;
+        return {name: L.name, pct: pct, color: L.color, goal: 100,
+          txt: (L.ev ? Math.round(L.ok / L.ev * 100) + ' % · ' + L.ok + '/' + L.ev : '—') + (totTxt(L) !== '—' ? ' · ' + totTxt(L) : ''),
+          tip: L.name + ' · ' + (L.ev ? Math.round(L.ok / L.ev * 100) + ' % (' + L.ok + ' / ' + L.ev + ')' : '—') + ' · total ' + totTxt(L) + ' · ' + repLbl(repOf(L.g)),
+          onActivate: function(){ var b = qd(out, 'hb', L.id); if(b) b.focus(); } };
+      }), 'hb', out));
       out.appendChild(s5);
       if(selL.length > 1 && ok){
         var s6 = section('Répartition par ligne', 'Part de chaque ligne dans les périodes réussies de la plage.');
