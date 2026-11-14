@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#1f6f5c">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planning 39 h</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Planning de la semaine</h1>
+      <div class="date" id="date"></div>
+    </div>
+    <label class="date">Jour courant&nbsp;
+      <select id="dayMode">
+        <option value="auto">Automatique</option>
+        <option value="0">Lundi</option>
+        <option value="1">Mardi</option>
+        <option value="2">Mercredi</option>
+        <option value="3">Jeudi</option>
+        <option value="4">Vendredi</option>
+      </select>
+    </label>
+  </header>
+  <nav class="tabs" aria-label="Sections">
+    <button type="button" data-tab="semaine" class="on">Semaine</button>
+    <button type="button" data-tab="histo">Historique</button>
+    <button type="button" data-tab="dash">Dashboard</button>
+    <button type="button" data-tab="checklists">Checklists</button>
+  </nav>
+  <div id="tab-semaine" class="panel">
+
+  <section class="card" data-keep>
+    <div style="display:flex;align-items:center;gap:8px"><label class="chip" style="flex:1;border-radius:10px"><input type="checkbox" id="schoolCb"><span><strong>✅ Semaine école</strong></span></label><span class="info" tabindex="0" role="button" aria-label="Aide" data-tip="Objectif et réalisé fixés à 35 h : aucune saisie nécessaire cette semaine.">i</span></div>
+  </section>
+
+  <section class="card">
+    <h2>Dernier badge<span class="info" id="momentInfo" tabindex="0" role="button" aria-label="Aide" data-tip="">i</span></h2>
+    <div class="seg" role="radiogroup" aria-label="Dernier badge">
+      <label><input type="radio" name="moment" value="matin"><span>Matin<small>arrivée</small></span></label>
+      <label><input type="radio" name="moment" value="midi"><span>Midi<small>pause</small></span></label>
+      <label><input type="radio" name="moment" value="soir"><span>Soir<small>départ</small></span></label>
+    </div>
+    <details>
+      <summary>Mes horaires</summary>
+      <div class="times">
+        <label>Arrivée<input type="time" id="tStart" value="08:00"></label>
+        <label>Pause<span id="pauseBox"></span></label>
+        <label>Reprise<input type="time" id="tResume" value="13:00"></label>
+        <label>Fin de journée<input type="time" id="tEnd" value="18:00"></label>
+      </div>
+    </details>
+  </section>
+
+  <section class="card">
+    <div class="field"><span><strong>Heures déjà réalisées</strong><span class="info" id="doneInfo" tabindex="0" role="button" aria-label="Aide" data-tip="">i</span></span><span id="doneBox"></span></div>
+  </section>
+
+  <section class="card">
+    <h2>Jours non travaillés (férié, RTT)<span class="info" id="offInfo" tabindex="0" role="button" aria-label="Aide" data-tip="">i</span></h2>
+    <div class="chips" id="offChips"></div>
+  </section>
+
+  <section class="card" data-keep aria-live="polite">
+    <div class="stats">
+      <div class="stat"><span>Objectif</span><strong id="sGoal">39,00 h</strong></div>
+      <div class="stat"><span>Réalisé</span><strong id="sDone"></strong></div>
+      <div class="stat"><span>Restant</span><strong id="sLeft"></strong></div>
+      <div class="stat"><span>Planifié</span><strong id="sPlan"></strong></div>
+      <div class="stat total"><span>Total semaine</span><strong id="sTotal"></strong></div>
+    </div>
+    <div class="bar" role="progressbar" aria-label="Progression vers 39 heures" aria-valuemin="0" aria-valuemax="39" id="bar">
+      <i class="done" id="barDone"></i><i class="plan" id="barPlan"></i>
+    </div>
+    <div class="barlabel"><span id="pctDone"></span><span id="pctTotal"></span></div>
+  </section>
+
+  <section class="card depart" id="departCard" hidden>
+    <div class="dep-main">
+      <svg class="clock" viewBox="0 0 120 120" role="img" aria-label="Horloge">
+        <circle cx="60" cy="60" r="57" class="face"/>
+        <g id="ticks"></g><g id="nums"></g>
+        <line id="hHand" x1="60" y1="64" x2="60" y2="34" class="hand h"/>
+        <line id="mHand" x1="60" y1="66" x2="60" y2="20" class="hand m"/>
+        <line id="sHand" x1="60" y1="70" x2="60" y2="14" class="hand sec"/>
+        <circle cx="60" cy="60" r="3.5" class="hub"/>
+      </svg>
+      <div class="dep-grid">
+        <div><span class="lbl">Temps restant aujourd’hui</span><strong id="depLeft" class="count">--:--:--</strong></div>
+        <div><span class="lbl">Départ estimé<span class="info" id="depInfo" tabindex="0" role="button" aria-label="Aide" data-tip="">i</span></span><strong class="big" id="depTime"></strong></div>
+      </div>
+    </div>
+    <div class="dprog"><div class="dbar"><i id="dBar"></i></div><div class="dlab"><span id="dPct">0 %</span><span id="dTxt"></span></div></div>
+  </section>
+
+  <div class="msg" id="msg"></div>
+
+  <section class="card">
+    <h2>Répartition des jours restants<span class="info" tabindex="0" role="button" aria-label="Aide" data-tip="Modifier une valeur la verrouille. Les jours non bloqués se partagent le reste à faire.">i</span></h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Jour</th><th class="num">Heures</th><th>Verrou</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="actions">
+      <button id="lockAll" type="button"></button>
+      <button id="reset" type="button" class="danger">Réinitialiser la semaine</button>
+    </div>
+  </section>
+</div>
+
+  <!-- ONGLET HISTORIQUE -->
+  <div id="tab-histo" class="panel" hidden>
+    <section class="card">
+      <div class="head"><h2>Semaines enregistrées<span class="info" tabindex="0" role="button" aria-label="Aide" data-tip="La semaine en cours est enregistrée automatiquement ; elle se modifie dans l’onglet Semaine.">i</span></h2><button type="button" id="hAdd" class="primary">+ Semaine</button></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Semaine</th><th>Type</th><th class="num">Objectif</th><th class="num">Effectué</th><th class="num">Écart</th><th></th></tr></thead>
+        <tbody id="hBody"></tbody>
+      </table></div>
+    </section>
+  </div>
+
+  <!-- ONGLET DASHBOARD : sous-sections Heures / Sport / Ménage / Devoirs -->
+  <div id="tab-dash" class="panel" hidden>
+    <nav class="subtabs" aria-label="Sections du Dashboard">
+      <button type="button" data-sub="heures">Heures</button><button type="button" data-sub="sport">Sport</button><button type="button" data-sub="menage">Ménage</button><button type="button" data-sub="devoirs">Devoirs</button>
+    </nav>
+    <div id="dash-heures">
+    <section class="card controls">
+      <label>Année <select id="fYear"></select></label>
+      <label>Type <select id="fType"><option value="all">Tous</option><option value="entreprise">Entreprise</option><option value="ecole">École</option></select></label>
+      <label>Regrouper <select id="fGroup"><option value="week">Par semaine</option><option value="month">Par mois</option></select></label>
+      <label>Tri du tableau <select id="fSort"><option value="recent">Récent d’abord</option><option value="old">Ancien d’abord</option><option value="done">Plus d’heures</option><option value="gap">Pire écart</option></select></label>
+    </section>
+    <div id="dashWidgets"></div>
+    </div>
+    <div id="dash-sport" hidden></div>
+    <div id="dash-menage" hidden></div>
+    <div id="dash-devoirs" hidden></div>
+  </div>
+
+  <!-- ONGLET CHECKLISTS -->
+  <div id="tab-checklists" class="panel" hidden>
+    <div id="ckGrid">
+      <div class="head"><h2>Mes checklists</h2><button type="button" id="ckNew" class="primary">+ Nouvelle checklist</button></div>
+      <div class="ck-grid" id="ckCards"></div>
+    </div>
+    <div id="ckDetail" hidden></div>
+  </div>
+
+  <section class="card" id="acct">
+    <div class="head"><h2>Compte et données</h2><span class="date" id="acctUser"></span></div>
+    <div class="actions" style="margin-top:0">
+      <button type="button" id="btnExport">Exporter</button>
+      <button type="button" id="btnImport">Importer</button>
+      <input type="file" id="fileImport" accept=".json,application/json" hidden>
+      <button type="button" id="btnLogout">Se déconnecter</button>
+    </div>
+    <p class="hint" id="acctMsg" role="status"></p>
+  </section>
+
+  <div id="tip" role="tooltip" hidden popover="manual"></div>
+
+  <dialog id="wDialog" aria-labelledby="wTitle">
+    <h2 id="wTitle"></h2>
+    <label class="field" style="margin-bottom:10px"><span>Lundi de la semaine</span><input type="date" id="wDate"></label>
+    <label class="chip" style="display:flex;margin-bottom:10px"><input type="checkbox" id="wSchool"><span>Semaine école (35 h)</span></label>
+    <label class="field" style="margin-bottom:10px"><span>Objectif</span><span id="wGoalBox"></span></label>
+    <label class="field"><span>Effectué</span><span id="wDoneBox"></span></label>
+    <p class="hint err" id="wErr"></p>
+    <div class="actions"><button type="button" id="wSave" class="primary">Enregistrer</button><button type="button" id="wCancel">Annuler</button></div>
+  </dialog>
+</main>
+
+<!-- Écrans de chargement / connexion (le planning reste masqué tant que la session n'est pas validée) -->
+<div id="loadingView" class="authbox card" role="status">Vérification de la session…</div>
+<section id="authView" class="authbox card" hidden>
+  <h1>Planning 39 h</h1>
+  <form id="authForm" novalidate>
+    <label>Adresse e-mail<input type="email" id="authEmail" autocomplete="username" inputmode="email"></label>
+    <label>Mot de passe<input type="password" id="authPass" autocomplete="current-password"></label>
+    <div class="actions" style="margin-top:0">
+      <button type="submit" class="primary">Se connecter</button>
+      <button type="button" id="btnSignup">Créer mon compte</button>
+      <button type="button" id="btnReset">Mot de passe oublié</button>
+    </div>
+  </form>
+  <form id="recForm" hidden>
+    <label>Nouveau mot de passe<input type="password" id="recPass" autocomplete="new-password"></label>
+    <div class="actions" style="margin-top:0"><button type="submit" class="primary">Enregistrer le mot de passe</button></div>
+  </form>
+  <p class="hint" id="authMsg" role="alert"></p>
+</section>
+<div id="syncChip" role="status">Vérification de la session…</div>
+<dialog id="cloudDialog" aria-labelledby="cdTitle"><h2 id="cdTitle"></h2><p id="cdText"></p><div class="actions" id="cdBtns"></div></dialog>
+
+<!-- Dialogue d'une carte : nom, type (à la création), icône, couleur, colonnes (cartes paramétrables) -->
+<dialog id="ckDialog" aria-labelledby="ckdTitle">
+  <h2 id="ckdTitle"></h2>
+  <form id="ckForm" novalidate>
+    <label class="ckl">Nom<input type="text" id="ckdName" maxlength="60" autocomplete="off"></label>
+    <label class="ckl" id="ckdTypeBox">Type<select id="ckdType"><option value="standard">Standard (liste de cases)</option><option value="custom">Paramétrable (tableau à colonnes)</option></select></label>
+    <div class="ckl"><span>Icône</span><div class="ck-emoji" id="ckdEmojis"></div><input type="text" id="ckdEmoji" maxlength="8" aria-label="Autre emoji" placeholder="Autre emoji"></div>
+    <div class="ckl"><span>Couleur</span><div class="ck-sw" id="ckdColors"></div></div>
+    <div class="ckl" id="ckdCols" hidden></div>
+    <p class="hint err" id="ckdErr" role="alert"></p>
+    <div class="actions"><button type="submit" class="primary">Enregistrer</button><button type="button" id="ckdCancel">Annuler</button></div>
+  </form>
+</dialog>
+
+<!-- Dialogue d'une ligne (cartes Sport et Ménage) : titre, type d'objectif, objectif, unité, répétition -->
+<dialog id="gDialog" aria-labelledby="gdTitle">
+  <h2 id="gdTitle"></h2>
+  <form id="gdForm" novalidate>
+    <label class="ckl" id="gdNameBox">Titre<input type="text" id="gdName" maxlength="60" autocomplete="off"></label>
+    <label class="ckl">Type d’objectif<select id="gdMode"><option value="check">Simple case à cocher</option><option value="time">Temps</option><option value="number">Nombre</option></select></label>
+    <div id="gdTimeBox" hidden>
+      <div class="ckl"><span>Objectif de temps par période</span><span id="gdTimeHost"></span></div>
+    </div>
+    <div id="gdNumBox" hidden>
+      <label class="ckl">Objectif (nombre) par période<input type="number" id="gdTarget" min="0" step="any" inputmode="decimal"></label>
+      <label class="ckl">Unité (facultative)<input type="text" id="gdUnit" maxlength="20" placeholder="répétitions, séances, km…" autocomplete="off"></label>
+    </div>
+    <div class="ckl"><span>Répétition</span><span id="gdRepHost"></span></div>
+    <p class="hint" id="gdGoalHint"></p>
+    <p class="hint">ℹ️ Un nouvel objectif s’applique à partir de la période en cours ; les périodes passées gardent l’objectif de l’époque. À chaque nouvelle période la case repart à zéro, sans rien effacer de l’historique.</p>
+    <p class="hint err" id="gdErr" role="alert"></p>
+    <div class="actions"><button type="submit" class="primary">Enregistrer</button><button type="button" id="gdCancel">Annuler</button></div>
+  </form>
+</dialog>
+
+<!-- Dialogue « Répétition » d'une cellule (cartes paramétrables) -->
+<dialog id="rpDialog" aria-labelledby="rpTitle">
+  <h2 id="rpTitle">Répétition</h2>
+  <form id="rpForm" novalidate>
+    <div class="ckl"><span id="rpHost"></span></div>
+    <p class="hint">Quand la ligne est cochée, elle se réarme : la date passe à l’occurrence suivante, la case se décoche et la réalisation est mémorisée.</p>
+    <div class="actions"><button type="submit" class="primary">Valider</button><button type="button" id="rpCancel">Annuler</button></div>
+  </form>
+</dialog>
+<script src="js/planning.js"></script>
+<script src="js/history.js"></script>
+<script src="js/checklists.js"></script>
+<script src="js/sync.js"></script>
+</body>
+</html>
+
