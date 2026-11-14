@@ -321,16 +321,17 @@ function init(){
     recovery = false; $('recForm').hidden = true; $('authForm').hidden = false; msg('authMsg', '');
     const {data} = await sb.auth.getUser(); if(data && data.user) start(data.user);
   };
-  $('btnLogout').onclick = async () => {   // ne supprime aucune donnée (ni locale, ni en ligne)
-    if(meta.dirty && !navigator.onLine && !confirm('Des modifications ne sont pas encore synchronisées. Elles restent sur cet appareil jusqu’à votre prochaine connexion. Se déconnecter ?')) return;
+  const doLogout = async () => {   // ne supprime aucune donnée (ni locale, ni en ligne)
+    if(meta.dirty && !navigator.onLine && !confirm('Des modifications ne sont pas encore synchronisées. Elles restent sur cet appareil jusqu\'à votre prochaine connexion. Se déconnecter ?')) return;
     if(meta.dirty && navigator.onLine) await pushNow();
     document.body.classList.remove('authed');
     await sb.auth.signOut(); location.reload();
   };
 
   /* ---------- Exportation / importation JSON ---------- */
-  $('btnExport').onclick = () => { download(snapshot(), 'planning-export'); msg('acctMsg', 'Export téléchargé.'); };
-  $('btnImport').onclick = () => $('fileImport').click();
+  const doExport = () => { download(snapshot(), 'planning-export'); msg('acctMsg', 'Export téléchargé.'); };
+  const doImport = () => $('fileImport').click();
+
   $('fileImport').onchange = async e => {
     const f = e.target.files[0]; e.target.value = ''; if(!f) return;
     if(!/\.json$/i.test(f.name)) return msg('acctMsg', 'Fichier refusé : seul un fichier .json est accepté.');
@@ -384,18 +385,14 @@ function init(){
     });
   }
 
-  // Raccourci : menu items -> fonctions existantes
+  // Action des boutons du menu
   const mExport = $('mExport');
   const mImport = $('mImport');
-  const mFileImport = $('fileImport');
   const mSettings = $('mSettings');
   const mLogout = $('mLogout');
-  const btnExport = $('btnExport');
-  const btnImport = $('btnImport');
-  const btnLogout = $('btnLogout');
-  if(mExport && btnExport) mExport.onclick = () => { btnExport.click(); appMenu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false'); };
-  if(mImport && btnImport) mImport.onclick = () => { btnImport.click(); appMenu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false'); };
-  if(mLogout && btnLogout) mLogout.onclick = () => { btnLogout.click(); appMenu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false'); };
+  if(mExport) mExport.onclick = () => { doExport(); appMenu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false'); };
+  if(mImport) mImport.onclick = () => { doImport(); appMenu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false'); };
+  if(mLogout) mLogout.onclick = () => { doLogout(); appMenu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false'); };
 
   // Dialogue paramètres
   const settingsDialog = $('settingsDialog');

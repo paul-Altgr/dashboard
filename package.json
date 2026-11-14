@@ -1,0 +1,24 @@
+{
+  "name": "en-cours",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paul-altgr/dashboard.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/paul-altgr/dashboard/issues"
+  },
+  "homepage": "https://github.com/paul-altgr/dashboard#readme",
+  "dependencies": {
+    "playwright": "^1.65.1"
+  }
+}
