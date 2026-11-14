@@ -358,6 +358,91 @@ function init(){
   document.addEventListener('visibilitychange', () => { if(!document.hidden) check(); });
   window.addEventListener('online', check);
   window.addEventListener('offline', () => { if(booted) status('offline'); });
+
+  /* ---------- Menu hamburger & Paramètres ---------- */
+  const menuBtn = $('menuBtn');
+  const appMenu = $('appMenu');
+  if(menuBtn && appMenu){
+    menuBtn.onclick = (e) => {
+      e.stopPropagation();
+      const open = appMenu.hidden;
+      appMenu.hidden = !open;
+      menuBtn.setAttribute('aria-expanded', open);
+    };
+    document.addEventListener('click', (e) => {
+      if(!appMenu.hidden && !appMenu.contains(e.target) && e.target !== menuBtn){
+        appMenu.hidden = true;
+        menuBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape' && !appMenu.hidden){
+        appMenu.hidden = true;
+        menuBtn.setAttribute('aria-expanded', 'false');
+        menuBtn.focus();
+      }
+    });
+  }
+
+  // Raccourci : menu items -> fonctions existantes
+  const mExport = $('mExport');
+  const mImport = $('mImport');
+  const mFileImport = $('fileImport');
+  const mSettings = $('mSettings');
+  const mLogout = $('mLogout');
+  const btnExport = $('btnExport');
+  const btnImport = $('btnImport');
+  const btnLogout = $('btnLogout');
+  if(mExport && btnExport) mExport.onclick = () => { btnExport.click(); appMenu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false'); };
+  if(mImport && btnImport) mImport.onclick = () => { btnImport.click(); appMenu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false'); };
+  if(mLogout && btnLogout) mLogout.onclick = () => { btnLogout.click(); appMenu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false'); };
+
+  // Dialogue paramètres
+  const settingsDialog = $('settingsDialog');
+  const settingsForm = $('settingsForm');
+  const themeSelect = $('themeSelect');
+  const settingsSave = $('settingsSave');
+  const settingsCancel = $('settingsCancel');
+  const settingsErr = $('settingsErr');
+
+  function loadTheme(){
+    const saved = localStorage.getItem('theme');
+    if(saved) return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function applyTheme(mode){
+    const root = document.documentElement;
+    root.removeAttribute('data-theme');
+    if(mode === 'dark') root.setAttribute('data-theme', 'dark');
+    else if(mode === 'light') root.setAttribute('data-theme', 'light');
+    // auto : ne rien faire, le CSS @media gère
+  }
+  function initTheme(){
+    const mode = loadTheme();
+    applyTheme(mode);
+    if(themeSelect) themeSelect.value = mode;
+  }
+  if(settingsDialog){
+    initTheme();
+    mSettings.onclick = () => {
+      appMenu.hidden = true;
+      menuBtn.setAttribute('aria-expanded', 'false');
+      settingsDialog.showModal();
+    };
+    settingsCancel.onclick = () => settingsDialog.close();
+    settingsForm.onsubmit = (e) => e.preventDefault();
+    settingsSave.onclick = () => {
+      const mode = themeSelect.value;
+      localStorage.setItem('theme', mode);
+      applyTheme(mode);
+      settingsDialog.close();
+    };
+    settingsDialog.oncancel = (e) => { e.preventDefault(); settingsDialog.close(); };
+    // Mettre à jour le select si le système change en mode auto
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if(themeSelect.value === 'auto') applyTheme('auto');
+    });
+  }
 }
 init();
 })();

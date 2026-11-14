@@ -14,13 +14,17 @@
   --bg:#121a18;--card:#1a2522;--ink:#e6efec;--muted:#93a39e;--line:#2c3a36;
   --accent:#4fc3a1;--accent-soft:#1d3a33;--warn:#f0b35c;--warn-soft:#3a2d17;--ok:#4fc3a1;--lock:#232d44;--gold:#e3c14a;color-scheme:dark;
 }
+:root[data-theme="light"]{
+  --bg:#f3f5f4;--card:#ffffff;--ink:#1d2a27;--muted:#5f6f6a;--line:#dbe2df;
+  --accent:#1f6f5c;--accent-soft:#dcefe9;--warn:#a85a00;--warn-soft:#fdf0dc;--ok:#1f6f5c;--lock:#e8ecf5;--gold:#c9a227;color-scheme:light;
+}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 main{max-width:900px;margin:0 auto;padding:12px 12px 28px}
-header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px;position:relative}
 h1{margin:0;font-size:1.35rem;letter-spacing:-.01em}
 h2{margin:0 0 8px;font-size:1rem}
 .date{color:var(--muted);font-size:.95rem}
@@ -281,3 +285,14 @@ label.g-title{cursor:pointer}
   .hb li{grid-template-columns:1fr auto}
   .hb-t{grid-column:1 / -1;order:3}
 }
+
+/* Menu hamburger */
+.menu{position:absolute;top:calc(100% + 8px);right:0;z-index:100;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);min-width:180px;padding:6px;overflow:hidden}
+.menu button{width:100%;text-align:left;padding:10px 12px;border:0;background:none;border-radius:8px;color:var(--ink);font-size:.95rem;display:flex;align-items:center;gap:8px}
+.menu button:hover{background:var(--accent-soft);color:var(--accent)}
+.menu-divider{height:1px;background:var(--line);margin:4px 0}
+
+/* Dialogue paramètres */
+#settingsDialog .field{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+#settingsDialog .field label{font-size:.9rem;color:var(--muted)}
+#settingsDialog .field select{padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}

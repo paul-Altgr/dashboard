@@ -15,16 +15,29 @@
       <h1>Planning de la semaine</h1>
       <div class="date" id="date"></div>
     </div>
-    <label class="date">Jour courant&nbsp;
-      <select id="dayMode">
-        <option value="auto">Automatique</option>
-        <option value="0">Lundi</option>
-        <option value="1">Mardi</option>
-        <option value="2">Mercredi</option>
-        <option value="3">Jeudi</option>
-        <option value="4">Vendredi</option>
-      </select>
-    </label>
+    <div style="display:flex;align-items:center;gap:8px">
+      <label class="date">Jour courant&nbsp;
+        <select id="dayMode">
+          <option value="auto">Automatique</option>
+          <option value="0">Lundi</option>
+          <option value="1">Mardi</option>
+          <option value="2">Mercredi</option>
+          <option value="3">Jeudi</option>
+          <option value="4">Vendredi</option>
+        </select>
+      </label>
+      <button type="button" class="ib" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="appMenu" data-lbl="Menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+      <div id="appMenu" class="menu" role="menu" hidden>
+        <button type="button" role="menuitem" id="mExport">Exporter</button>
+        <button type="button" role="menuitem" id="mImport">Importer</button>
+        <input type="file" id="fileImport" accept=".json,application/json" hidden>
+        <button type="button" role="menuitem" id="mSettings">Paramètres</button>
+        <div class="menu-divider"></div>
+        <button type="button" role="menuitem" id="mLogout">Se déconnecter</button>
+      </div>
+    </div>
   </header>
   <nav class="tabs" aria-label="Sections">
     <button type="button" data-tab="semaine" class="on">Semaine</button>
@@ -241,6 +254,23 @@
     <div class="ckl"><span id="rpHost"></span></div>
     <p class="hint">Quand la ligne est cochée, elle se réarme : la date passe à l’occurrence suivante, la case se décoche et la réalisation est mémorisée.</p>
     <div class="actions"><button type="submit" class="primary">Valider</button><button type="button" id="rpCancel">Annuler</button></div>
+  </form>
+</dialog>
+
+<!-- Dialogue Paramètres -->
+<dialog id="settingsDialog" aria-labelledby="settingsTitle">
+  <h2 id="settingsTitle">Paramètres</h2>
+  <form id="settingsForm" novalidate>
+    <div class="field">
+      <label>Thème</label>
+      <select id="themeSelect">
+        <option value="auto">Automatique (système)</option>
+        <option value="light">Clair</option>
+        <option value="dark">Sombre</option>
+      </select>
+    </div>
+    <p class="hint err" id="settingsErr" role="alert"></p>
+    <div class="actions"><button type="button" class="primary" id="settingsSave">Enregistrer</button><button type="button" id="settingsCancel">Annuler</button></div>
   </form>
 </dialog>
 <script src="js/planning.js"></script>
