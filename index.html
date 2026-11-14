@@ -24,8 +24,11 @@
           <option value="2">Mercredi</option>
           <option value="3">Jeudi</option>
           <option value="4">Vendredi</option>
+          <option value="5">Samedi</option>
+          <option value="6">Dimanche</option>
         </select>
       </label>
+      <span class="date" id="acctUser" style="margin-right:8px"></span>
       <button type="button" class="ib" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="appMenu" data-lbl="Menu">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
       </button>
@@ -39,6 +42,7 @@
       </div>
     </div>
   </header>
+  <p class="hint" id="acctMsg" role="status" style="margin:4px 0 10px;min-height:1.2em"></p>
   <nav class="tabs" aria-label="Sections">
     <button type="button" data-tab="semaine" class="on">Semaine</button>
     <button type="button" data-tab="histo">Historique</button>
@@ -165,17 +169,6 @@
     </div>
     <div id="ckDetail" hidden></div>
   </div>
-
-  <section class="card" id="acct">
-    <div class="head"><h2>Compte et données</h2><span class="date" id="acctUser"></span></div>
-    <div class="actions" style="margin-top:0">
-      <button type="button" id="btnExport">Exporter</button>
-      <button type="button" id="btnImport">Importer</button>
-      <input type="file" id="fileImport" accept=".json,application/json" hidden>
-      <button type="button" id="btnLogout">Se déconnecter</button>
-    </div>
-    <p class="hint" id="acctMsg" role="status"></p>
-  </section>
 
   <div id="tip" role="tooltip" hidden popover="manual"></div>
 

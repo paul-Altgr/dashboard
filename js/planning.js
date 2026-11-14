@@ -1,7 +1,7 @@
 /* Démarré par la couche Supabase une fois l'utilisateur authentifié */
 window.bootPlanning = function(){
   var GOAL = 39 * 60, DAY = 39 * 60 / 5, KEY = window.CloudSync.keys.plan;   // cache local propre à l'utilisateur
-  var DAYS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
+  var DAYS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
   var $ = function(id){ return document.getElementById(id); };
 
   function pad(n){ return (n < 10 ? '0' : '') + n; }
@@ -77,7 +77,10 @@ window.bootPlanning = function(){
   function todayIdx(){
     if(st.mode !== 'auto') return +st.mode;
     var g = new Date().getDay();
-    return (g === 0 || g === 6) ? 4 : g - 1;
+    // 0=dimanche, 1=lundi... 6=samedi
+    if(g === 0) return 6; // Dimanche -> index 6 (Dimanche)
+    if(g === 6) return 5; // Samedi -> index 5 (Samedi)
+    return g - 1; // Lundi=0...Vendredi=4
   }
   function startIdx(){ return todayIdx() + (st.moment === 'soir' ? 1 : 0); }
   function remainingDays(){
@@ -312,6 +315,7 @@ window.bootPlanning = function(){
     var s = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
     s = s.charAt(0).toUpperCase() + s.slice(1);
     if(st.mode === 'auto' && isWeekend()) s += ' (week-end : calcul à partir de vendredi)';
+    if(st.mode !== 'auto' && (st.mode === '5' || st.mode === '6')) s += ' (jour forcé)';
     $('date').textContent = s;
   }
   function dropPastLocks(){
